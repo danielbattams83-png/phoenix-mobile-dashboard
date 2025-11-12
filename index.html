@@ -3,446 +3,500 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Phoenix Project: Next 14 Days Client Bookings</title>
-    <!-- Load Tailwind CSS from CDN for styling -->
+    <title>Phoenix Client Dashboard</title>
+    <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Load Lucide Icons for aesthetic elements -->
-    <script type="module">
-        import { createIcons, CalendarCheck, ClipboardList, Info, Loader2 } from 'https://cdn.jsdelivr.net/npm/lucide-esm@latest';
-        createIcons({ icons: { CalendarCheck, ClipboardList, Info, Loader2 } });
-    </script>
+    <!-- Use Inter font -->
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f1f5f9; /* Light slate background */
-            min-height: 100vh;
-        }
-        /* Custom scrollbar for better appearance */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 4px;
-        }
-        /* Style for the main container to ensure centering and responsiveness */
-        #app-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 1rem;
-        }
-        .task-list {
-            max-height: 500px; /* Limit height for tasks */
-            overflow-y: auto;
-        }
-        /* Style for disabled button state */
-        .auth-button-disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f7f9fb; }
+        .card { box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); }
+        .auth-card { transition: all 0.3s ease; }
+        .spinner { border-top-color: #f3f3f3; border-left-color: #f3f3f3; border-right-color: #ef4444; }
     </style>
 </head>
-<body>
-    <div id="app-container">
+<body class="min-h-screen p-4 sm:p-8">
+
+    <!-- Main Application Container -->
+    <div id="app" class="max-w-6xl mx-auto">
         <!-- Header -->
-        <header class="text-center py-6">
-            <div class="flex items-center justify-center space-x-3 bg-white p-6 rounded-2xl shadow-xl">
-                <img src="https://placehold.co/60x60/f87171/ffffff?text=P" onerror="this.src='https://placehold.co/60x60/f87171/ffffff?text=P'" alt="Phoenix Logo Placeholder" class="rounded-full">
+        <header class="mb-8">
+            <div class="card bg-white p-6 rounded-xl flex items-center shadow-lg">
+                <div id="logo-icon" class="w-12 h-12 flex items-center justify-center rounded-full bg-red-600 text-white font-bold text-xl mr-4">P</div>
                 <div>
-                    <h1 class="text-3xl font-bold text-gray-800">Phoenix Project: Next 14 Days Client Bookings</h1>
-                    <p class="text-sm text-gray-500 mt-1">Targeting Calendar: <span id="calendar-email-display" class="font-semibold text-red-500">Loading...</span></p>
+                    <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-800">Phoenix Project: Next 14 Days Client Bookings</h1>
+                    <p class="text-sm text-gray-500 mt-1">Targeting Calendar: <span id="calendar-email">Loading...</span></p>
                 </div>
             </div>
         </header>
 
-        <!-- Authorization Section -->
-        <div id="auth-section" class="text-center my-8 p-8 bg-white rounded-2xl shadow-lg border-2 border-red-300 hidden">
-            <i data-lucide="info" class="w-8 h-8 mx-auto text-red-500 mb-4"></i>
-            <p id="auth-message" class="text-gray-600 mb-4">
-                Checking API status...
-            </p>
-            <button id="authorize_button" disabled class="bg-red-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg transition duration-200 auth-button-disabled">
-                Authorize Access
-            </button>
-        </div>
-
-        <!-- Dashboard Content -->
-        <div id="content-section" class="hidden">
-            <!-- Loading Indicator -->
-            <div id="loading-indicator" class="text-center py-12">
-                <i data-lucide="loader-2" class="w-10 h-10 mx-auto text-red-500 animate-spin"></i>
-                <p class="mt-4 text-gray-600">Loading events and tasks...</p>
-            </div>
-
-            <!-- Error Message Area -->
-            <div id="error-message" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl relative mb-6 hidden" role="alert">
-                <strong class="font-bold">API Initialization Error!</strong>
-                <span id="error-details" class="block sm:inline"></span>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-                <!-- Left Column: Calendar Events -->
-                <div class="lg:col-span-2">
-                    <!-- Bookings Summary Card -->
-                    <div class="bg-white p-6 rounded-2xl shadow-md mb-6">
-                        <h2 class="text-xl font-semibold text-gray-800 mb-2">Bookings Summary</h2>
-                        <p class="text-gray-600">
-                            You have <span id="event-count" class="text-2xl font-bold text-red-600">...</span> upcoming client bookings in the next 14 days.
-                        </p>
-                    </div>
-
-                    <!-- Calendar Events List -->
-                    <div id="calendar-events-list" class="space-y-4">
-                        <!-- Events will be dynamically inserted here -->
+        <!-- Dynamic Content Area -->
+        <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Left Column: Calendar Events -->
+            <div class="lg:col-span-2">
+                <h2 class="text-xl font-semibold text-gray-700 mb-4 flex items-center">
+                    <span id="calendar-icon"></span>
+                    Calendar Events
+                </h2>
+                <div id="summary-section" class="card bg-white p-4 rounded-xl mb-6 text-gray-700">
+                    <!-- Summary placeholder -->
+                </div>
+                <div id="events-container">
+                    <!-- Events will be dynamically injected here -->
+                    <div id="loading-spinner" class="flex justify-center items-center py-10">
+                        <div class="spinner animate-spin rounded-full h-12 w-12 border-4 border-t-4 border-red-500"></div>
+                        <p class="ml-4 text-gray-500">Loading events...</p>
                     </div>
                 </div>
+            </div>
 
-                <!-- Right Column: Tasks List -->
-                <div class="lg:col-span-1">
-                    <div class="bg-white p-6 rounded-2xl shadow-xl">
-                        <h2 class="text-xl font-semibold text-gray-800 flex items-center mb-4">
-                            <i data-lucide="clipboard-list" class="w-6 h-6 mr-2 text-red-500"></i> Phoenix To Do
-                            <a id="tasks-external-link" href="#" target="_blank" class="ml-auto text-gray-400 hover:text-red-500 transition duration-150">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-external-link"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/></svg>
-                            </a>
-                        </h2>
-                        <div id="tasks-list" class="task-list space-y-3">
-                            <p class="text-gray-500">Loading tasks...</p>
-                            <!-- Tasks will be dynamically inserted here -->
-                        </div>
-                    </div>
+            <!-- Right Column: Tasks -->
+            <div class="lg:col-span-1">
+                <h2 class="text-xl font-semibold text-gray-700 mb-4 flex items-center">
+                    <span id="tasks-icon"></span>
+                    Phoenix To Do
+                </h2>
+                <div id="tasks-container" class="card bg-white p-4 rounded-xl">
+                    <!-- Tasks will be dynamically injected here -->
+                    <p class="text-gray-500">Loading tasks...</p>
                 </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Authorization/Error Modal Display -->
+    <div id="auth-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden items-center justify-center p-4 z-50">
+        <div id="auth-card" class="auth-card bg-white p-8 rounded-xl max-w-sm w-full text-center shadow-2xl scale-100">
+            <div id="modal-content">
+                <!-- Content will be injected by JavaScript -->
             </div>
         </div>
     </div>
 
-    <!-- Google API Scripts: Loaded without onload attributes to use polling instead -->
-    <script src="https://apis.google.com/js/api.js"></script>
-    <script src="https://accounts.google.com/gsi/client"></script>
+    <!-- GAPI/GIS Script Loaders -->
+    <script async defer src="https://apis.google.com/js/api.js"></script>
+    <script async defer src="https://accounts.google.com/gsi/client"></script>
+
+    <!-- Lucide Icons Script Fix (Using a reliable bundled version) -->
+    <script type="module">
+        import { createIcons, Calendar, ClipboardList } from 'https://unpkg.com/lucide@latest';
+
+        // Set the global Lucide icons object
+        window.lucideIcons = { Calendar, ClipboardList };
+
+        // Render icons when the script loads
+        document.addEventListener('DOMContentLoaded', () => {
+            const calendarIconPlaceholder = document.getElementById('calendar-icon');
+            if (calendarIconPlaceholder) {
+                calendarIconPlaceholder.innerHTML = createIcons({ icons: { Calendar } }).Calendar.toSvg({ class: 'w-6 h-6 mr-2 text-red-600' });
+            }
+            const tasksIconPlaceholder = document.getElementById('tasks-icon');
+            if (tasksIconPlaceholder) {
+                tasksIconPlaceholder.innerHTML = createIcons({ icons: { ClipboardList } }).ClipboardList.toSvg({ class: 'w-6 h-6 mr-2 text-red-600' });
+            }
+        });
+    </script>
 
     <script>
         // --- CONFIGURATION ---
-        const CLIENT_ID = '234330216775-c4gdq3hshpqmviujm5lmdqnoufptpgdp.apps.googleusercontent.com';
-        const API_KEY = ''; 
-        const CALENDAR_ID = 'dsa.goldcoast@gmail.com'; 
-        const TASK_LIST_TITLE = 'Phoenix To Do'; 
+        const CLIENT_ID = 'YOUR_CLIENT_ID_HERE'; // REPLACE WITH YOUR GOOGLE CLOUD CLIENT ID
+        const API_KEY = ''; // KEEP THIS BLANK. Authentication is handled by OAuth.
+        const CALENDAR_ID = 'YOUR_CALENDAR_ID_HERE'; // REPLACE with the target calendar ID (e.g., email address)
+        const TASK_LIST_TITLE = 'Phoenix To Do'; // Task list to search for (case-sensitive)
 
-        // --- SCOPES AND DISCOVERY ---
+        // Scopes required for Calendar Read-Only and Tasks Read-Only
         const SCOPES = 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/tasks.readonly';
+
+        // --- GLOBAL STATE ---
         let tokenClient;
-        let authReady = false;
+        let isGapiLoaded = false;
+        let isGisLoaded = false;
+        let authState = 'loading'; // 'loading', 'unauthenticated', 'authenticated', 'error'
 
         // --- DOM Elements ---
-        const authSection = document.getElementById('auth-section');
-        const contentSection = document.getElementById('content-section');
-        const loadingIndicator = document.getElementById('loading-indicator');
-        const errorMessage = document.getElementById('error-message');
-        const errorDetails = document.getElementById('error-details');
-        const calendarEventsList = document.getElementById('calendar-events-list');
-        const tasksList = document.getElementById('tasks-list');
-        const eventCountSpan = document.getElementById('event-count');
-        const calendarEmailDisplay = document.getElementById('calendar-email-display');
-        const authorizeButton = document.getElementById('authorize_button');
-        const authMessage = document.getElementById('auth-message');
+        const authModal = document.getElementById('auth-modal');
+        const modalContent = document.getElementById('modal-content');
+        const eventsContainer = document.getElementById('events-container');
+        const tasksContainer = document.getElementById('tasks-container');
+        const summarySection = document.getElementById('summary-section');
+        const calendarEmailSpan = document.getElementById('calendar-email');
 
-        calendarEmailDisplay.textContent = CALENDAR_ID;
+        // Initial setup of calendar ID display
+        calendarEmailSpan.textContent = CALENDAR_ID;
 
         // --- UTILITY FUNCTIONS ---
 
-        function showAuthSection() {
-            authSection.classList.remove('hidden');
-            contentSection.classList.add('hidden');
-            loadingIndicator.classList.add('hidden');
-            errorMessage.classList.add('hidden');
-        }
+        /** Shows the modal with a specific message and button (if needed). */
+        function showModal(title, message, buttonText = null, buttonAction = null) {
+            authState = 'unauthenticated';
+            authModal.classList.remove('hidden');
+            authModal.classList.add('flex');
 
-        function showContentSection() {
-            authSection.classList.add('hidden');
-            contentSection.classList.remove('hidden');
-        }
-
-        function displayError(details) {
-            console.error("API Error:", details);
-            loadingIndicator.classList.add('hidden');
-            contentSection.classList.remove('hidden');
-            errorMessage.classList.remove('hidden');
-            errorDetails.textContent = details;
-            calendarEventsList.innerHTML = '';
-            tasksList.innerHTML = '<p class="text-red-500 font-semibold">Tasks failed to load due to authorization error.</p>';
-        }
-
-        function enableAuthorizeButton() {
-            authorizeButton.disabled = false;
-            authorizeButton.classList.remove('auth-button-disabled');
-            authorizeButton.classList.add('hover:bg-red-700');
-            authMessage.textContent = 'This dashboard requires access to your Google Calendar and Tasks.';
-            authorizeButton.addEventListener('click', handleAuthClick, { once: true });
-        }
-
-
-        // --- AUTH & INITIALIZATION ---
-        
-        /**
-         * The robust polling mechanism to ensure both GAPI and GIS are defined before init.
-         */
-        function waitForApiReady() {
-            // Check for both gapi and google.accounts objects
-            if (typeof gapi !== 'undefined' && typeof google.accounts !== 'undefined') {
-                console.log("GAPI and GIS objects are available. Proceeding with initialization.");
-                initGapiClient();
-            } else {
-                console.log("Waiting for GAPI and GIS to load...");
-                // Re-run this check in 100ms
-                setTimeout(waitForApiReady, 100);
+            modalContent.innerHTML = `
+                <div class="text-center">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">${title}</h2>
+                    <p class="text-gray-600 mb-6">${message}</p>
+                    ${buttonText ? `<button id="modal-button" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition duration-150">${buttonText}</button>` : ''}
+                </div>
+            `;
+            const button = document.getElementById('modal-button');
+            if (button && buttonAction) {
+                button.onclick = buttonAction;
             }
+
+            // Hide main content when modal is visible
+            eventsContainer.innerHTML = '';
+            tasksContainer.innerHTML = `<p class="text-gray-500">Tasks failed to load due to authorization error.</p>`;
+            summarySection.innerHTML = `<p class="text-gray-500 font-semibold">This dashboard requires access to your Google Calendar and Tasks.</p>`;
         }
 
-        /**
-         * Initializes the GAPI client library.
-         */
-        function initGapiClient() {
-            gapi.load('client', () => {
-                gapi.client.init({
-                    apiKey: API_KEY,
-                    discoveryDocs: [
-                        'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest', 
-                        'https://www.googleapis.com/discovery/v1/apis/tasks/v1/rest'
-                    ],
-                }).then(() => {
-                    initGisClient();
-                }).catch(e => {
-                    displayError('GAPI Client Initialization Error. Details: ' + (e.details || 'Unknown Init Error. Check API Key/Project setup.'));
-                });
+        /** Clears and hides the modal. */
+        function hideModal() {
+            authModal.classList.add('hidden');
+            authModal.classList.remove('flex');
+        }
+
+        /** Formats an RFC3339 timestamp to a display time string (e.g., '03:00 PM'). */
+        function formatTime(dateTimeStr) {
+            const date = new Date(dateTimeStr);
+            return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        /** Formats a date object to a display date header (e.g., 'Monday 10 November 2025'). */
+        function formatDateHeader(date) {
+            return date.toLocaleDateString('en-US', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
             });
         }
 
-        /**
-         * Initializes the GIS token client.
-         */
-        function initGisClient() {
-             tokenClient = google.accounts.oauth2.initTokenClient({
+        // --- AUTHENTICATION/INITIALIZATION ---
+
+        /** Called when the Google API client library (`gapi`) is loaded. */
+        window.gapiLoaded = function() {
+            isGapiLoaded = true;
+            console.log('GAPI loaded.');
+            gapi.load('client', initializeGapiClient);
+        }
+
+        /** Initializes the Google API client library with project configuration. */
+        function initializeGapiClient() {
+            gapi.client.init({
+                apiKey: API_KEY,
+                discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest", "https://www.googleapis.com/discovery/v1/apis/tasks/v1/rest"],
+            }).then(() => {
+                console.log('GAPI client initialized.');
+                checkInitializationStatus();
+            }).catch(error => {
+                console.error("GAPI Client Initialization Error:", error);
+                showModal(
+                    'GAPI Client Initialization Error!',
+                    `This means your API Key or project settings are incorrect. Details: ${error.details || 'Unknown GAPI Init Error.'}. Please check your API Key (currently showing ${API_KEY || 'BLANK'}) and Client ID in the Google Cloud Console.`,
+                    'Retry'
+                );
+            });
+        }
+
+        /** Called when the Google Identity Services library (`gis`) is loaded. */
+        window.gisLoaded = function() {
+            isGisLoaded = true;
+            console.log('GIS loaded.');
+            tokenClient = google.accounts.oauth2.initTokenClient({
                 client_id: CLIENT_ID,
                 scope: SCOPES,
                 callback: (tokenResponse) => {
-                    // This callback runs after the user authorizes or denies access
-                    if (tokenResponse && tokenResponse.access_token) {
-                        sessionStorage.setItem('access_token', tokenResponse.access_token);
-                        gapi.client.setToken(tokenResponse);
-                        showContentSection();
-                        fetchData();
-                    } else {
-                         // If auth fails or is denied, revert to show auth button
-                        showAuthSection(); 
-                        enableAuthorizeButton();
+                    if (tokenResponse.error) {
+                        console.error('Token acquisition failed:', tokenResponse.error);
+                        return;
                     }
+                    console.log('Token acquired successfully. Loading data...');
+                    sessionStorage.setItem('access_token', tokenResponse.access_token);
+                    gapi.client.setToken(tokenResponse);
+                    hideModal();
+                    loadDashboardData();
                 },
             });
-
-            authReady = true;
-            // Check for existing token and trigger silent sign-in if needed
-            checkExistingToken();
+            checkInitializationStatus();
         }
 
-        /**
-         * Checks if a token exists and tries to use it.
-         */
-        function checkExistingToken() {
-            const storedToken = sessionStorage.getItem('access_token');
-            if (storedToken) {
-                // Set the token (even if it's expired) to try and use it
-                gapi.client.setToken({ access_token: storedToken });
-                showContentSection();
-                // Attempt to fetch data immediately, fetchData will handle token expiry errors
-                fetchData();
-            } else {
-                // No token, prompt user to authorize
-                showAuthSection();
-                enableAuthorizeButton();
+        /** Checks if both GAPI and GIS are loaded and determines the next step. */
+        function checkInitializationStatus() {
+            if (isGapiLoaded && isGisLoaded) {
+                const token = sessionStorage.getItem('access_token');
+                if (token) {
+                    console.log('Found token, attempting to use it...');
+                    gapi.client.setToken({ access_token: token });
+                    loadDashboardData();
+                } else {
+                    console.log('No token found. Showing authorization prompt.');
+                    showAuthPrompt();
+                }
             }
         }
-        
-        /**
-         * Initiates the Google Authorization process (called by button click).
-         */
+
+        /** Displays the 'Authorize Access' prompt. */
+        function showAuthPrompt() {
+            showModal(
+                'Access Required',
+                'This dashboard requires authorization to securely read your Google Calendar and Tasks data.',
+                'Authorize Access',
+                handleAuthClick
+            );
+        }
+
+        /** Initiates the OAuth token request flow. */
         function handleAuthClick() {
-            if (!authReady) {
-                console.warn("Authentication services not fully initialized yet.");
-                return; 
-            }
-
-            if (gapi.client.getToken() === null) {
-                // Request consent for first time access
+            if (tokenClient) {
+                // Request a new token
                 tokenClient.requestAccessToken({ prompt: 'consent' });
             } else {
-                // Token set (may be expired), try silent refresh
-                tokenClient.requestAccessToken({ prompt: '' });
+                console.error("Token client not initialized. Cannot perform authentication.");
+                showModal(
+                    'Initialization Error',
+                    'Google Authentication services are not ready. Please check the console for GAPI/GIS load errors and try refreshing.',
+                    'Refresh Page',
+                    () => window.location.reload()
+                );
             }
         }
 
+        // --- DATA LOADING ---
 
-        /**
-         * Fetches both calendar events and tasks concurrently.
-         */
-        async function fetchData() {
-            loadingIndicator.classList.remove('hidden');
-            errorMessage.classList.add('hidden');
-
+        /** Main function to orchestrate data loading for the entire dashboard. */
+        async function loadDashboardData() {
             try {
-                // Attempt to refresh the token silently first (if already authorized)
-                // This isn't strictly necessary as requestAccessToken handles it, but good practice.
-                // For simplicity, we rely on the main API calls to fail gracefully.
-                
+                // Display loading state
+                eventsContainer.innerHTML = `
+                    <div id="loading-spinner" class="flex justify-center items-center py-10">
+                        <div class="spinner animate-spin rounded-full h-12 w-12 border-4 border-t-4 border-red-500"></div>
+                        <p class="ml-4 text-gray-500">Loading client data...</p>
+                    </div>
+                `;
+                tasksContainer.innerHTML = `<p class="text-gray-500">Loading tasks...</p>`;
+                summarySection.innerHTML = `<p class="text-gray-500 font-semibold">Fetching data from Google...</p>`;
+
                 await Promise.all([
-                    listUpcomingEvents(),
-                    listTasks()
+                    fetchCalendarEvents(),
+                    fetchTaskLists()
                 ]);
 
-            } catch (e) {
-                console.error("Fetch Data Error:", e);
-                // The error is likely an expired token or permission issue (401/403)
-                displayError('Failed to fetch data. Please re-authorize. Details: ' + (e.message || 'Unknown network or API error.'));
-                sessionStorage.removeItem('access_token');
-                showAuthSection();
-                enableAuthorizeButton();
-            } finally {
-                loadingIndicator.classList.add('hidden');
+                hideModal(); // Ensure modal is hidden if we successfully load
+            } catch (error) {
+                console.error("Error loading dashboard data:", error);
+                // If a 401 Unauthorized error occurs, the token is invalid, so re-authorize.
+                if (error.status === 401) {
+                    sessionStorage.removeItem('access_token');
+                    showAuthPrompt();
+                } else {
+                    showModal(
+                        'Data Load Error',
+                        `Failed to fetch data: ${error.result?.error?.message || 'An unknown error occurred.'}. Please try re-authorizing or check the console.`,
+                        'Re-authorize',
+                        handleAuthClick
+                    );
+                }
             }
         }
 
-        // --- CALENDAR FUNCTIONS (Unchanged) ---
-        async function listUpcomingEvents() {
+        /** Fetches and renders the next 14 days of calendar events. */
+        async function fetchCalendarEvents() {
             const now = new Date();
-            const maxTime = new Date();
-            maxTime.setDate(now.getDate() + 14);
+            const maxDate = new Date();
+            maxDate.setDate(now.getDate() + 14);
 
-            let response;
-            try {
-                response = await gapi.client.calendar.events.list({
-                    'calendarId': CALENDAR_ID,
-                    'timeMin': now.toISOString(),
-                    'timeMax': maxTime.toISOString(),
-                    'showDeleted': false,
-                    'singleEvents': true,
-                    'maxResults': 50,
-                    'orderBy': 'startTime',
-                });
-            } catch (err) {
-                throw new Error('Calendar API Error: ' + err.result.error.message);
-            }
+            const response = await gapi.client.calendar.events.list({
+                'calendarId': CALENDAR_ID,
+                'timeMin': now.toISOString(),
+                'timeMax': maxDate.toISOString(),
+                'showDeleted': false,
+                'singleEvents': true,
+                'orderBy': 'startTime'
+            });
 
-            const events = response.result.items;
-            eventCountSpan.textContent = events.length;
+            const events = response.result.items || [];
+            renderCalendarEvents(events);
+            renderSummary(events);
+        }
 
-            if (!events || events.length === 0) {
-                calendarEventsList.innerHTML = '<p class="text-gray-500 p-4 bg-white rounded-xl shadow-md">No upcoming events found in the next 14 days.</p>';
+        /** Renders the event list to the DOM. */
+        function renderCalendarEvents(events) {
+            eventsContainer.innerHTML = ''; // Clear loading spinner
+            if (events.length === 0) {
+                eventsContainer.innerHTML = `<p class="text-gray-500 p-4">No upcoming client bookings found in the next 14 days.</p>`;
                 return;
             }
 
-            calendarEventsList.innerHTML = ''; 
-            let lastDate = '';
+            let lastDate = null;
+            let html = '';
 
-            events.forEach((event) => {
-                const start = event.start.dateTime || event.start.date;
-                const startDate = new Date(start);
+            events.forEach(event => {
+                // Determine start time and notes
                 const isAllDay = !event.start.dateTime;
+                const startTime = isAllDay ? 'All Day' : formatTime(event.start.dateTime);
+                const eventDate = isAllDay ? new Date(event.start.date) : new Date(event.start.dateTime);
+                const dateHeader = formatDateHeader(eventDate);
+                const notes = event.description ? event.description.split('\n').filter(line => line.trim().length > 0) : [];
+                const maxNotes = 2; // Display up to 2 lines of notes
 
-                const dateString = startDate.toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-
-                if (dateString !== lastDate) {
-                    calendarEventsList.innerHTML += `
-                        <h3 class="text-xl font-bold text-gray-700 mt-6 mb-2 border-b-2 border-red-200 pb-1">${dateString}</h3>
-                    `;
-                    lastDate = dateString;
+                // Add date header if it's a new day
+                if (dateHeader !== lastDate) {
+                    html += `<h3 class="text-lg font-semibold text-gray-800 border-b border-gray-300 pb-2 mt-6 mb-4">${dateHeader}</h3>`;
+                    lastDate = dateHeader;
                 }
 
-                const timeString = isAllDay
-                    ? 'All Day'
-                    : startDate.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', hour12: true });
-
-                const notes = event.description ? event.description.split('\n').filter(line => line.trim().length > 0).map(line => `<p class="text-sm italic text-gray-500">${line}</p>`).join('') : '';
-
-                calendarEventsList.innerHTML += `
-                    <div class="flex bg-white p-5 rounded-xl shadow-md hover:shadow-lg transition duration-200 border-l-4 ${isAllDay ? 'border-indigo-500' : 'border-red-500'}">
-                        <div class="w-20 text-center mr-4">
-                            <span class="block text-2xl font-semibold ${isAllDay ? 'text-indigo-600' : 'text-red-600'}">${timeString.split(' ')[0]}</span>
-                            <span class="block text-xs uppercase text-gray-500">${timeString.split(' ')[1] || ''}</span>
+                // Event Card
+                html += `
+                    <div class="card bg-white p-4 rounded-xl mb-4 flex transition duration-150 hover:shadow-md">
+                        <!-- Time Stamp -->
+                        <div class="flex-shrink-0 w-24 text-center border-r pr-4">
+                            <p class="text-xl font-bold ${isAllDay ? 'text-green-600' : 'text-red-600'}">${isAllDay ? 'All Day' : eventDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }).replace(' ', '&nbsp;')}</p>
+                            ${isAllDay ? `<p class="text-xs text-green-600"></p>` : `<p class="text-xs text-gray-500">${eventDate.toLocaleTimeString('en-US', { hour: '2-digit' }).slice(-2)}</p>`}
                         </div>
-                        <div class="flex-grow">
-                            <p class="text-lg font-semibold text-gray-800">${event.summary || '(No Title)'}</p>
-                            ${notes ? `<div class="mt-2">${notes}</div>` : ''}
+                        <!-- Event Details -->
+                        <div class="flex-grow pl-4">
+                            <h4 class="text-lg font-semibold text-gray-800">${event.summary || '(No Title)'}</h4>
+                            ${notes.length > 0 ? `
+                                <div class="mt-1 text-sm text-gray-600">
+                                    <p class="font-bold text-gray-700">Notes:</p>
+                                    ${notes.slice(0, maxNotes).map(note => `<p>${note}</p>`).join('')}
+                                    ${notes.length > maxNotes ? `<p class="text-xs text-red-500 mt-1">...and more details</p>` : ''}
+                                </div>
+                            ` : '<p class="text-sm text-gray-500 italic mt-1">No notes provided for this booking.</p>'}
                         </div>
                     </div>
                 `;
             });
+
+            eventsContainer.innerHTML = html;
         }
 
+        /** Renders a simple summary of the fetched events. */
+        function renderSummary(events) {
+            summarySection.innerHTML = `
+                <p class="text-lg font-semibold text-gray-700">Bookings Summary</p>
+                <p class="text-base text-gray-600 mt-1">You have <span class="font-bold text-red-600">${events.length}</span> upcoming client bookings in the next 14 days.</p>
+            `;
+        }
 
-        // --- TASKS FUNCTIONS (Unchanged) ---
-        async function listTasks() {
-            tasksList.innerHTML = '<p class="text-gray-500 flex items-center"><i data-lucide="loader-2" class="w-4 h-4 mr-2 animate-spin"></i> Loading tasks...</p>';
+        /** Fetches all task lists and then specifically targets the required list. */
+        async function fetchTaskLists() {
+            const listResponse = await gapi.client.tasks.tasklists.list({});
+            const taskLists = listResponse.result.items || [];
+            const targetList = taskLists.find(list => list.title === TASK_LIST_TITLE);
 
-            let taskListId = null;
-
-            // 1. Find the Task List ID
-            try {
-                const taskListsResponse = await gapi.client.tasks.tasklists.list({});
-                const targetList = taskListsResponse.result.items.find(list => list.title === TASK_LIST_TITLE);
-
-                if (!targetList) {
-                    tasksList.innerHTML = `<p class="text-red-500 font-semibold">Task List "${TASK_LIST_TITLE}" not found. Please ensure the title is an exact, case-sensitive match.</p>`;
-                    return;
-                }
-                taskListId = targetList.id;
-                tasksExternalLink.href = `https://mail.google.com/tasks/canvas?id=${taskListId}&edit=1`;
-
-            } catch (err) {
-                throw new Error('Failed to find task lists. Check authorization or API status.');
+            if (!targetList) {
+                renderTaskError(`Task List "${TASK_LIST_TITLE}" not found. Ensure this list exists and its name is an exact, case-sensitive match.`);
+                return;
             }
 
-            // 2. Fetch Tasks using the ID
-            try {
-                const tasksResponse = await gapi.client.tasks.tasks.list({
-                    'tasklist': taskListId,
-                    'showCompleted': false,
-                    'showHidden': false,
-                });
-                const tasks = tasksResponse.result.items;
+            const tasksResponse = await gapi.client.tasks.tasks.list({
+                tasklist: targetList.id,
+                showCompleted: false,
+                showHidden: false // This means we only get top-level tasks and their immediate children
+            });
 
-                tasksList.innerHTML = '';
+            const tasks = tasksResponse.result.items || [];
+            renderTasks(tasks);
+        }
 
-                if (!tasks || tasks.length === 0) {
-                    tasksList.innerHTML = '<p class="text-gray-500">No pending tasks in the Phoenix To Do list. Great job!</p>';
-                    return;
-                }
+        /** Renders the task list to the DOM. */
+        function renderTasks(tasks) {
+            if (tasks.length === 0) {
+                tasksContainer.innerHTML = `<p class="text-gray-500">No pending tasks found.</p>`;
+                return;
+            }
 
-                tasks.forEach(task => {
-                    const hasDueDate = task.due ? new Date(task.due) : null;
-                    const dueDateString = hasDueDate ? hasDueDate.toLocaleDateString('en-AU', { day: 'numeric', month: 'short' }) : 'No Due Date';
+            let html = '';
 
-                    tasksList.innerHTML += `
-                        <div class="flex items-start space-x-3 p-2 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 rounded-lg transition duration-150">
-                            <input type="checkbox" disabled class="mt-1.5 w-4 h-4 text-red-600 bg-gray-100 border-gray-300 rounded focus:ring-red-500">
-                            <div class="flex-grow">
-                                <p class="text-sm font-medium text-gray-900">${task.title}</p>
-                                <p class="text-xs text-gray-500">${dueDateString}</p>
+            tasks.forEach(task => {
+                // Only show top-level tasks (those without a parent)
+                if (!task.parent) {
+                    // Find all child tasks
+                    const childTasks = tasks.filter(t => t.parent === task.id);
+                    const hasChildren = childTasks.length > 0;
+                    
+                    // Format task date
+                    const dueDate = task.due 
+                        ? new Date(task.due).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })
+                        : 'No Due Date';
+
+                    html += `
+                        <div class="mb-3 p-2 border-l-4 ${hasChildren ? 'border-red-400' : 'border-red-600'}">
+                            <div class="flex items-start">
+                                <span class="text-lg text-red-600 mr-2">•</span>
+                                <div class="flex-grow">
+                                    <p class="font-semibold text-gray-800 leading-tight">${task.title}</p>
+                                    <p class="text-xs text-gray-500">${dueDate}</p>
+                                </div>
                             </div>
+                            
+                            ${hasChildren ? `
+                                <ul class="ml-4 mt-1 space-y-1">
+                                    ${childTasks.map(child => `
+                                        <li class="flex items-start text-sm text-gray-600">
+                                            <span class="text-red-400 mr-2">•</span>
+                                            ${child.title}
+                                        </li>
+                                    `).join('')}
+                                </ul>
+                            ` : ''}
                         </div>
                     `;
-                });
+                }
+            });
+            
+            tasksContainer.innerHTML = html;
+        }
 
-            } catch (err) {
-                throw new Error('Failed to load tasks. Check authorization.');
+        /** Renders a specific task error. */
+        function renderTaskError(message) {
+            tasksContainer.innerHTML = `
+                <div class="bg-red-50 border-l-4 border-red-500 p-4 text-sm text-red-700 rounded-lg">
+                    <p class="font-bold">Task Error</p>
+                    <p>${message}</p>
+                </div>
+            `;
+        }
+
+        // --- Window/Polling Setup ---
+
+        // Use a simple polling mechanism to check if GAPI and GIS have loaded.
+        // This is necessary because the scripts are loaded asynchronously.
+        const maxAttempts = 20;
+        let attempt = 0;
+
+        function checkLibraryLoaded() {
+            if (attempt >= maxAttempts) {
+                console.error("Library Loading Timeout.");
+                showModal(
+                    'Library Loading Timeout',
+                    'Failed to load Google Identity Services (GIS) or GAPI client libraries after 5 seconds. Check your network connection or if a strict Content Security Policy is blocking external scripts.',
+                    'Retry Loading',
+                    () => window.location.reload()
+                );
+                return;
+            }
+
+            // Check if the global functions defined in gapi/gis have been created
+            const isGapiReady = typeof gapiLoaded === 'function';
+            const isGisReady = typeof gisLoaded === 'function';
+
+            if (isGapiReady && isGisReady) {
+                // We don't call them here, but the async scripts will call them automatically
+                // The global functions are the entry points. We just wait for them to finish.
+                console.log('Google library global entry points are defined. Waiting for GAPI/GIS to call them.');
+                // We'll trust the gapiLoaded and gisLoaded callbacks to handle initialization.
+            } else {
+                // If they're not ready, increment the attempt counter and try again soon
+                attempt++;
+                setTimeout(checkLibraryLoaded, 250); // Check every 250ms
             }
         }
 
-        // Initial entry point: Start waiting for APIs to load
-        window.onload = function() {
-            showAuthSection(); 
-            waitForApiReady();
-        };
-
+        // Start the check after the DOM is fully loaded
+        window.addEventListener('load', checkLibraryLoaded);
     </script>
 </body>
 </html>
