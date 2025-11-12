@@ -10,6 +10,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f7f9fb; }
+        /* Add basic shadow styling */
         .card { box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); }
         .auth-card { transition: all 0.3s ease; }
         .spinner { border-top-color: #f3f3f3; border-left-color: #f3f3f3; border-right-color: #ef4444; }
@@ -22,6 +23,7 @@
         <!-- Header -->
         <header class="mb-8">
             <div class="card bg-white p-6 rounded-xl flex items-center shadow-lg">
+                <!-- Simple Logo Placeholder -->
                 <div id="logo-icon" class="w-12 h-12 flex items-center justify-center rounded-full bg-red-600 text-white font-bold text-xl mr-4">P</div>
                 <div>
                     <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-800">Phoenix Project: Next 14 Days Client Bookings</h1>
@@ -74,39 +76,27 @@
     </div>
 
     <!-- GAPI/GIS Script Loaders -->
-    <script async defer src="https://apis.google.com/js/api.js"></script>
-    <script async defer src="https://accounts.google.com/gsi/client"></script>
-
-    <!-- Lucide Icons Script Fix (Using a reliable bundled version) -->
-    <script type="module">
-        import { createIcons, Calendar, ClipboardList } from 'https://unpkg.com/lucide@latest';
-
-        // Set the global Lucide icons object
-        window.lucideIcons = { Calendar, ClipboardList };
-
-        // Render icons when the script loads
-        document.addEventListener('DOMContentLoaded', () => {
-            const calendarIconPlaceholder = document.getElementById('calendar-icon');
-            if (calendarIconPlaceholder) {
-                calendarIconPlaceholder.innerHTML = createIcons({ icons: { Calendar } }).Calendar.toSvg({ class: 'w-6 h-6 mr-2 text-red-600' });
-            }
-            const tasksIconPlaceholder = document.getElementById('tasks-icon');
-            if (tasksIconPlaceholder) {
-                tasksIconPlaceholder.innerHTML = createIcons({ icons: { ClipboardList } }).ClipboardList.toSvg({ class: 'w-6 h-6 mr-2 text-red-600' });
-            }
-        });
-    </script>
+    <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
+    <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
 
     <script>
         // --- CONFIGURATION ---
-        const CLIENT_ID = 'YOUR_CLIENT_ID_HERE'; // REPLACE WITH YOUR GOOGLE CLOUD CLIENT ID
+        // Client ID based on uploaded screenshot (Javascript.png)
+        const CLIENT_ID = '234330216775-c4gdq3hshpqmviujm5lmdqnoufptpgdp.apps.googleusercontent.com'; 
         const API_KEY = ''; // KEEP THIS BLANK. Authentication is handled by OAuth.
-        const CALENDAR_ID = 'YOUR_CALENDAR_ID_HERE'; // REPLACE with the target calendar ID (e.g., email address)
-        const TASK_LIST_TITLE = 'Phoenix To Do'; // Task list to search for (case-sensitive)
+        // Calendar ID based on uploaded UI screenshots
+        const CALENDAR_ID = 'dsa.goldcoast@gmail.com'; 
+        // Task list title based on uploaded task list screenshot
+        const TASK_LIST_TITLE = 'Phoenix To Do'; 
 
         // Scopes required for Calendar Read-Only and Tasks Read-Only
         const SCOPES = 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/tasks.readonly';
 
+        // --- ICON SVGS (Inline Fix to avoid import errors) ---
+        // Using inline SVGs for stability
+        const ICON_CALENDAR = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mr-2 text-red-600"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`;
+        const ICON_TASKS = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mr-2 text-red-600"><rect x="18" y="4" width="3" height="3" fill="currentColor"/><path d="M7 11h14M7 16h14M7 21h14M3 7h1m0 5h1m0 5h1"/></svg>`;
+        
         // --- GLOBAL STATE ---
         let tokenClient;
         let isGapiLoaded = false;
@@ -121,7 +111,9 @@
         const summarySection = document.getElementById('summary-section');
         const calendarEmailSpan = document.getElementById('calendar-email');
 
-        // Initial setup of calendar ID display
+        // Initial setup of icons and calendar ID display
+        document.getElementById('calendar-icon').innerHTML = ICON_CALENDAR;
+        document.getElementById('tasks-icon').innerHTML = ICON_TASKS;
         calendarEmailSpan.textContent = CALENDAR_ID;
 
         // --- UTILITY FUNCTIONS ---
@@ -144,7 +136,7 @@
                 button.onclick = buttonAction;
             }
 
-            // Hide main content when modal is visible
+            // Show simplified content when modal is visible
             eventsContainer.innerHTML = '';
             tasksContainer.innerHTML = `<p class="text-gray-500">Tasks failed to load due to authorization error.</p>`;
             summarySection.innerHTML = `<p class="text-gray-500 font-semibold">This dashboard requires access to your Google Calendar and Tasks.</p>`;
@@ -173,6 +165,9 @@
         }
 
         // --- AUTHENTICATION/INITIALIZATION ---
+        
+        // IMPORTANT: The onload="gapiLoaded()" and onload="gisLoaded()" attributes in the script tags 
+        // will call these functions as soon as the respective libraries are loaded.
 
         /** Called when the Google API client library (`gapi`) is loaded. */
         window.gapiLoaded = function() {
@@ -183,17 +178,28 @@
 
         /** Initializes the Google API client library with project configuration. */
         function initializeGapiClient() {
+            // Check if gapi.client exists before proceeding (safety check)
+            if (!gapi.client) {
+                console.error("GAPI client failed to load.");
+                showModal('GAPI Load Failure', 'The core Google API client failed to initialize. Please check your network.', 'Refresh Page', () => window.location.reload());
+                return;
+            }
+
             gapi.client.init({
-                apiKey: API_KEY,
+                apiKey: API_KEY, // Note: This should be blank for OAuth
                 discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest", "https://www.googleapis.com/discovery/v1/apis/tasks/v1/rest"],
             }).then(() => {
                 console.log('GAPI client initialized.');
                 checkInitializationStatus();
             }).catch(error => {
+                // If the GAPI key is invalid, an error status 400 or 403 might occur.
+                const errorMessage = error.details || error.message || 'Unknown GAPI Init Error.';
                 console.error("GAPI Client Initialization Error:", error);
+                
+                // Show a detailed error message if initialization fails
                 showModal(
                     'GAPI Client Initialization Error!',
-                    `This means your API Key or project settings are incorrect. Details: ${error.details || 'Unknown GAPI Init Error.'}. Please check your API Key (currently showing ${API_KEY || 'BLANK'}) and Client ID in the Google Cloud Console.`,
+                    `This means your API Key or project settings are incorrect or restricted. Details: ${errorMessage}. Please check your API Key (currently showing ${API_KEY || 'BLANK'}) and Client ID in the Google Cloud Console.`,
                     'Retry'
                 );
             });
@@ -203,15 +209,28 @@
         window.gisLoaded = function() {
             isGisLoaded = true;
             console.log('GIS loaded.');
+            
+            // Check if google.accounts exists before proceeding (safety check)
+            if (!google || !google.accounts || !google.accounts.oauth2) {
+                console.error("GIS client failed to load.");
+                showModal('GIS Load Failure', 'The Google Identity Services client failed to initialize. Please check your network.', 'Refresh Page', () => window.location.reload());
+                return;
+            }
+
             tokenClient = google.accounts.oauth2.initTokenClient({
                 client_id: CLIENT_ID,
                 scope: SCOPES,
                 callback: (tokenResponse) => {
+                    // Check if there was an error during token acquisition
                     if (tokenResponse.error) {
+                        // User cancelled, or other authorization error occurred
                         console.error('Token acquisition failed:', tokenResponse.error);
+                        // Re-show the auth prompt to allow the user to try again
+                        showAuthPrompt(); 
                         return;
                     }
                     console.log('Token acquired successfully. Loading data...');
+                    // Store the token in session storage to keep the user signed in across refreshes
                     sessionStorage.setItem('access_token', tokenResponse.access_token);
                     gapi.client.setToken(tokenResponse);
                     hideModal();
@@ -238,6 +257,10 @@
 
         /** Displays the 'Authorize Access' prompt. */
         function showAuthPrompt() {
+            // Ensure no spinner is running on the main screen
+            eventsContainer.innerHTML = ''; 
+            tasksContainer.innerHTML = '';
+            
             showModal(
                 'Access Required',
                 'This dashboard requires authorization to securely read your Google Calendar and Tasks data.',
@@ -249,7 +272,7 @@
         /** Initiates the OAuth token request flow. */
         function handleAuthClick() {
             if (tokenClient) {
-                // Request a new token
+                // Request a new token with prompt for consent
                 tokenClient.requestAccessToken({ prompt: 'consent' });
             } else {
                 console.error("Token client not initialized. Cannot perform authentication.");
@@ -277,22 +300,27 @@
                 tasksContainer.innerHTML = `<p class="text-gray-500">Loading tasks...</p>`;
                 summarySection.innerHTML = `<p class="text-gray-500 font-semibold">Fetching data from Google...</p>`;
 
+                // Fetch Calendar and Tasks in parallel
                 await Promise.all([
                     fetchCalendarEvents(),
                     fetchTaskLists()
                 ]);
 
                 hideModal(); // Ensure modal is hidden if we successfully load
+                authState = 'authenticated';
             } catch (error) {
                 console.error("Error loading dashboard data:", error);
+                
                 // If a 401 Unauthorized error occurs, the token is invalid, so re-authorize.
-                if (error.status === 401) {
+                const status = error.result?.error?.code || error.status;
+                
+                if (status === 401) {
                     sessionStorage.removeItem('access_token');
                     showAuthPrompt();
                 } else {
                     showModal(
                         'Data Load Error',
-                        `Failed to fetch data: ${error.result?.error?.message || 'An unknown error occurred.'}. Please try re-authorizing or check the console.`,
+                        `Failed to fetch data (Status: ${status}). Please try re-authorizing or check the console. Error Message: ${error.result?.error?.message || 'Unknown Error.'}`,
                         'Re-authorize',
                         handleAuthClick
                     );
@@ -335,8 +363,13 @@
                 // Determine start time and notes
                 const isAllDay = !event.start.dateTime;
                 const startTime = isAllDay ? 'All Day' : formatTime(event.start.dateTime);
-                const eventDate = isAllDay ? new Date(event.start.date) : new Date(event.start.dateTime);
+                
+                // Use start.date for all-day events, start.dateTime for timed events
+                const eventDateSource = isAllDay ? event.start.date : event.start.dateTime;
+                const eventDate = new Date(eventDateSource);
                 const dateHeader = formatDateHeader(eventDate);
+                
+                // Parse description, filtering out empty lines
                 const notes = event.description ? event.description.split('\n').filter(line => line.trim().length > 0) : [];
                 const maxNotes = 2; // Display up to 2 lines of notes
 
@@ -360,8 +393,8 @@
                             ${notes.length > 0 ? `
                                 <div class="mt-1 text-sm text-gray-600">
                                     <p class="font-bold text-gray-700">Notes:</p>
-                                    ${notes.slice(0, maxNotes).map(note => `<p>${note}</p>`).join('')}
-                                    ${notes.length > maxNotes ? `<p class="text-xs text-red-500 mt-1">...and more details</p>` : ''}
+                                    ${notes.slice(0, maxNotes).map(note => `<p class="truncate">${note}</p>`).join('')}
+                                    ${notes.length > maxNotes ? `<p class="text-xs text-red-500 mt-1">...and ${notes.length - maxNotes} more line(s)</p>` : ''}
                                 </div>
                             ` : '<p class="text-sm text-gray-500 italic mt-1">No notes provided for this booking.</p>'}
                         </div>
@@ -384,17 +417,20 @@
         async function fetchTaskLists() {
             const listResponse = await gapi.client.tasks.tasklists.list({});
             const taskLists = listResponse.result.items || [];
+            
+            // Search for the task list by the configured title
             const targetList = taskLists.find(list => list.title === TASK_LIST_TITLE);
 
             if (!targetList) {
-                renderTaskError(`Task List "${TASK_LIST_TITLE}" not found. Ensure this list exists and its name is an exact, case-sensitive match.`);
+                renderTaskError(`Task List "${TASK_LIST_TITLE}" not found. Ensure this list exists and its name is an exact, case-sensitive match in your Google Tasks.`);
                 return;
             }
 
             const tasksResponse = await gapi.client.tasks.tasks.list({
                 tasklist: targetList.id,
                 showCompleted: false,
-                showHidden: false // This means we only get top-level tasks and their immediate children
+                // The API can return tasks out of order, sorting is handled client-side
+                orderBy: 'position' // A good default, but JS sorts below
             });
 
             const tasks = tasksResponse.result.items || [];
@@ -407,54 +443,67 @@
                 tasksContainer.innerHTML = `<p class="text-gray-500">No pending tasks found.</p>`;
                 return;
             }
+            
+            // Organize tasks: filter out completed tasks and build a map for children
+            const activeTasks = tasks.filter(task => task.status === 'needsAction');
+            const taskMap = {};
+            activeTasks.forEach(task => {
+                task.children = [];
+                taskMap[task.id] = task;
+            });
+
+            const topLevelTasks = [];
+
+            // Assign children to their parents
+            activeTasks.forEach(task => {
+                if (task.parent && taskMap[task.parent]) {
+                    taskMap[task.parent].children.push(task);
+                } else {
+                    topLevelTasks.push(task);
+                }
+            });
 
             let html = '';
 
-            tasks.forEach(task => {
-                // Only show top-level tasks (those without a parent)
-                if (!task.parent) {
-                    // Find all child tasks
-                    const childTasks = tasks.filter(t => t.parent === task.id);
-                    const hasChildren = childTasks.length > 0;
-                    
-                    // Format task date
-                    const dueDate = task.due 
-                        ? new Date(task.due).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })
-                        : 'No Due Date';
+            topLevelTasks.forEach(task => {
+                // Format task date
+                const dueDate = task.due 
+                    ? new Date(task.due).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })
+                    : 'No Due Date';
 
-                    html += `
-                        <div class="mb-3 p-2 border-l-4 ${hasChildren ? 'border-red-400' : 'border-red-600'}">
-                            <div class="flex items-start">
-                                <span class="text-lg text-red-600 mr-2">•</span>
-                                <div class="flex-grow">
-                                    <p class="font-semibold text-gray-800 leading-tight">${task.title}</p>
-                                    <p class="text-xs text-gray-500">${dueDate}</p>
-                                </div>
+                html += `
+                    <div class="mb-4 p-3 border-l-4 border-red-600 bg-red-50 rounded-md">
+                        <div class="flex items-start">
+                            <span class="text-lg text-red-600 mr-2 font-bold">•</span>
+                            <div class="flex-grow">
+                                <p class="font-semibold text-gray-800 leading-tight">${task.title}</p>
+                                <p class="text-xs text-gray-500">Due: ${dueDate}</p>
                             </div>
-                            
-                            ${hasChildren ? `
-                                <ul class="ml-4 mt-1 space-y-1">
-                                    ${childTasks.map(child => `
-                                        <li class="flex items-start text-sm text-gray-600">
-                                            <span class="text-red-400 mr-2">•</span>
-                                            ${child.title}
-                                        </li>
-                                    `).join('')}
-                                </ul>
-                            ` : ''}
                         </div>
-                    `;
-                }
+                        
+                        ${task.children.length > 0 ? `
+                            <ul class="ml-4 mt-2 space-y-1">
+                                ${task.children.map(child => `
+                                    <li class="flex items-start text-sm text-gray-700">
+                                        <span class="text-red-400 mr-2 mt-1">•</span>
+                                        ${child.title}
+                                    </li>
+                                `).join('')}
+                            </ul>
+                        ` : ''}
+                    </div>
+                `;
             });
             
             tasksContainer.innerHTML = html;
         }
 
+
         /** Renders a specific task error. */
         function renderTaskError(message) {
             tasksContainer.innerHTML = `
                 <div class="bg-red-50 border-l-4 border-red-500 p-4 text-sm text-red-700 rounded-lg">
-                    <p class="font-bold">Task Error</p>
+                    <p class="font-bold">Task List Not Found</p>
                     <p>${message}</p>
                 </div>
             `;
@@ -462,8 +511,8 @@
 
         // --- Window/Polling Setup ---
 
-        // Use a simple polling mechanism to check if GAPI and GIS have loaded.
-        // This is necessary because the scripts are loaded asynchronously.
+        // Simple polling to ensure gapi/gis entry points are available.
+        // This is a robust way to handle the asynchronous script loading.
         const maxAttempts = 20;
         let attempt = 0;
 
@@ -472,7 +521,7 @@
                 console.error("Library Loading Timeout.");
                 showModal(
                     'Library Loading Timeout',
-                    'Failed to load Google Identity Services (GIS) or GAPI client libraries after 5 seconds. Check your network connection or if a strict Content Security Policy is blocking external scripts.',
+                    'Failed to load Google Identity Services (GIS) or GAPI client libraries. Check your network.',
                     'Retry Loading',
                     () => window.location.reload()
                 );
@@ -484,10 +533,8 @@
             const isGisReady = typeof gisLoaded === 'function';
 
             if (isGapiReady && isGisReady) {
-                // We don't call them here, but the async scripts will call them automatically
-                // The global functions are the entry points. We just wait for them to finish.
                 console.log('Google library global entry points are defined. Waiting for GAPI/GIS to call them.');
-                // We'll trust the gapiLoaded and gisLoaded callbacks to handle initialization.
+                // The scripts will now call gapiLoaded/gisLoaded themselves via the 'onload' attribute.
             } else {
                 // If they're not ready, increment the attempt counter and try again soon
                 attempt++;
