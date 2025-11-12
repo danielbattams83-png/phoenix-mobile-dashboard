@@ -36,6 +36,11 @@
             max-height: 500px; /* Limit height for tasks */
             overflow-y: auto;
         }
+        /* Style for disabled button state */
+        .auth-button-disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
@@ -54,10 +59,10 @@
         <!-- Authorization Section -->
         <div id="auth-section" class="text-center my-8 p-8 bg-white rounded-2xl shadow-lg border-2 border-red-300 hidden">
             <i data-lucide="info" class="w-8 h-8 mx-auto text-red-500 mb-4"></i>
-            <p class="text-gray-600 mb-4">
-                This dashboard requires access to your Google Calendar and Tasks.
+            <p id="auth-message" class="text-gray-600 mb-4">
+                Checking API status...
             </p>
-            <button id="authorize_button" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-xl shadow-lg transition duration-200">
+            <button id="authorize_button" disabled class="bg-red-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg transition duration-200 auth-button-disabled">
                 Authorize Access
             </button>
         </div>
@@ -72,7 +77,7 @@
 
             <!-- Error Message Area -->
             <div id="error-message" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl relative mb-6 hidden" role="alert">
-                <strong class="font-bold">GAPI Client Initialization Error!</strong>
+                <strong class="font-bold">API Initialization Error!</strong>
                 <span id="error-details" class="block sm:inline"></span>
             </div>
 
@@ -113,22 +118,21 @@
         </div>
     </div>
 
-    <!-- Google API Scripts -->
-    <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
-    <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
+    <!-- Google API Scripts: Loaded without onload attributes to use polling instead -->
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script src="https://accounts.google.com/gsi/client"></script>
 
     <script>
         // --- CONFIGURATION ---
         const CLIENT_ID = '234330216775-c4gdq3hshpqmviujm5lmdqnoufptpgdp.apps.googleusercontent.com';
-        const API_KEY = ''; // Leave blank, the CLIENT_ID and OAuth flow are sufficient for this app
-        const CALENDAR_ID = 'dsa.goldcoast@gmail.com'; // Calendar email to display and fetch events from
-        const TASK_LIST_TITLE = 'Phoenix To Do'; // The exact title of the Google Task List to fetch
+        const API_KEY = ''; 
+        const CALENDAR_ID = 'dsa.goldcoast@gmail.com'; 
+        const TASK_LIST_TITLE = 'Phoenix To Do'; 
 
         // --- SCOPES AND DISCOVERY ---
         const SCOPES = 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/tasks.readonly';
         let tokenClient;
-        let gapiInited = false;
-        let gisInited = false;
+        let authReady = false;
 
         // --- DOM Elements ---
         const authSection = document.getElementById('auth-section');
@@ -140,13 +144,13 @@
         const tasksList = document.getElementById('tasks-list');
         const eventCountSpan = document.getElementById('event-count');
         const calendarEmailDisplay = document.getElementById('calendar-email-display');
-        const tasksExternalLink = document.getElementById('tasks-external-link');
+        const authorizeButton = document.getElementById('authorize_button');
+        const authMessage = document.getElementById('auth-message');
 
         calendarEmailDisplay.textContent = CALENDAR_ID;
 
-        /**
-         * Shows the authorization button and hides the content.
-         */
+        // --- UTILITY FUNCTIONS ---
+
         function showAuthSection() {
             authSection.classList.remove('hidden');
             contentSection.classList.add('hidden');
@@ -154,20 +158,13 @@
             errorMessage.classList.add('hidden');
         }
 
-        /**
-         * Shows the content section and hides the authorization button.
-         */
         function showContentSection() {
             authSection.classList.add('hidden');
             contentSection.classList.remove('hidden');
         }
 
-        /**
-         * Handles the GAPI error display.
-         * @param {string} details - The error message.
-         */
         function displayError(details) {
-            console.error("GAPI Error:", details);
+            console.error("API Error:", details);
             loadingIndicator.classList.add('hidden');
             contentSection.classList.remove('hidden');
             errorMessage.classList.remove('hidden');
@@ -176,72 +173,113 @@
             tasksList.innerHTML = '<p class="text-red-500 font-semibold">Tasks failed to load due to authorization error.</p>';
         }
 
+        function enableAuthorizeButton() {
+            authorizeButton.disabled = false;
+            authorizeButton.classList.remove('auth-button-disabled');
+            authorizeButton.classList.add('hover:bg-red-700');
+            authMessage.textContent = 'This dashboard requires access to your Google Calendar and Tasks.';
+            authorizeButton.addEventListener('click', handleAuthClick, { once: true });
+        }
+
+
+        // --- AUTH & INITIALIZATION ---
+        
         /**
-         * Callback after api.js is loaded.
+         * The robust polling mechanism to ensure both GAPI and GIS are defined before init.
          */
-        function gapiLoaded() {
-            gapi.client.init({
-                apiKey: API_KEY,
-                discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest', 'https://www.googleapis.com/discovery/v1/apis/tasks/v1/rest'],
-            }).then(() => {
-                gapiInited = true;
-                maybeEnableAuthButton();
-            }).catch(e => {
-                displayError('GAPI Client Initialization Error. Details: ' + e.details || 'Unknown GAPI Init Error.');
+        function waitForApiReady() {
+            // Check for both gapi and google.accounts objects
+            if (typeof gapi !== 'undefined' && typeof google.accounts !== 'undefined') {
+                console.log("GAPI and GIS objects are available. Proceeding with initialization.");
+                initGapiClient();
+            } else {
+                console.log("Waiting for GAPI and GIS to load...");
+                // Re-run this check in 100ms
+                setTimeout(waitForApiReady, 100);
+            }
+        }
+
+        /**
+         * Initializes the GAPI client library.
+         */
+        function initGapiClient() {
+            gapi.load('client', () => {
+                gapi.client.init({
+                    apiKey: API_KEY,
+                    discoveryDocs: [
+                        'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest', 
+                        'https://www.googleapis.com/discovery/v1/apis/tasks/v1/rest'
+                    ],
+                }).then(() => {
+                    initGisClient();
+                }).catch(e => {
+                    displayError('GAPI Client Initialization Error. Details: ' + (e.details || 'Unknown Init Error. Check API Key/Project setup.'));
+                });
             });
         }
 
         /**
-         * Callback after gis.js is loaded.
+         * Initializes the GIS token client.
          */
-        function gisLoaded() {
-            tokenClient = google.accounts.oauth2.initTokenClient({
+        function initGisClient() {
+             tokenClient = google.accounts.oauth2.initTokenClient({
                 client_id: CLIENT_ID,
                 scope: SCOPES,
                 callback: (tokenResponse) => {
+                    // This callback runs after the user authorizes or denies access
                     if (tokenResponse && tokenResponse.access_token) {
+                        sessionStorage.setItem('access_token', tokenResponse.access_token);
                         gapi.client.setToken(tokenResponse);
                         showContentSection();
                         fetchData();
                     } else {
-                        showAuthSection();
+                         // If auth fails or is denied, revert to show auth button
+                        showAuthSection(); 
+                        enableAuthorizeButton();
                     }
                 },
             });
-            gisInited = true;
-            maybeEnableAuthButton();
+
+            authReady = true;
+            // Check for existing token and trigger silent sign-in if needed
+            checkExistingToken();
         }
 
         /**
-         * Checks if both GAPI and GIS are initialized before checking for token.
+         * Checks if a token exists and tries to use it.
          */
-        function maybeEnableAuthButton() {
-            if (gapiInited && gisInited) {
-                // If a token exists in session storage (from previous auth), try silent refresh
-                if (sessionStorage.getItem('access_token')) {
-                    gapi.client.setToken({ access_token: sessionStorage.getItem('access_token') });
-                    showContentSection();
-                    fetchData();
-                } else {
-                    showAuthSection();
-                }
+        function checkExistingToken() {
+            const storedToken = sessionStorage.getItem('access_token');
+            if (storedToken) {
+                // Set the token (even if it's expired) to try and use it
+                gapi.client.setToken({ access_token: storedToken });
+                showContentSection();
+                // Attempt to fetch data immediately, fetchData will handle token expiry errors
+                fetchData();
+            } else {
+                // No token, prompt user to authorize
+                showAuthSection();
+                enableAuthorizeButton();
             }
         }
-
+        
         /**
-         * Initiates the Google Authorization process.
+         * Initiates the Google Authorization process (called by button click).
          */
         function handleAuthClick() {
+            if (!authReady) {
+                console.warn("Authentication services not fully initialized yet.");
+                return; 
+            }
+
             if (gapi.client.getToken() === null) {
-                // Sideload popup for new authorization
+                // Request consent for first time access
                 tokenClient.requestAccessToken({ prompt: 'consent' });
             } else {
-                // Token exists but might be expired, try silent refresh (or prompt if needed)
+                // Token set (may be expired), try silent refresh
                 tokenClient.requestAccessToken({ prompt: '' });
             }
         }
-
-        document.getElementById('authorize_button').addEventListener('click', handleAuthClick);
 
 
         /**
@@ -252,23 +290,28 @@
             errorMessage.classList.add('hidden');
 
             try {
+                // Attempt to refresh the token silently first (if already authorized)
+                // This isn't strictly necessary as requestAccessToken handles it, but good practice.
+                // For simplicity, we rely on the main API calls to fail gracefully.
+                
                 await Promise.all([
                     listUpcomingEvents(),
                     listTasks()
                 ]);
+
             } catch (e) {
                 console.error("Fetch Data Error:", e);
-                displayError('Failed to fetch data. Please re-authorize. Details: ' + (e.message || 'Unknown error.'));
+                // The error is likely an expired token or permission issue (401/403)
+                displayError('Failed to fetch data. Please re-authorize. Details: ' + (e.message || 'Unknown network or API error.'));
+                sessionStorage.removeItem('access_token');
+                showAuthSection();
+                enableAuthorizeButton();
             } finally {
                 loadingIndicator.classList.add('hidden');
             }
         }
 
-        // --- CALENDAR FUNCTIONS ---
-
-        /**
-         * Fetches and displays upcoming calendar events.
-         */
+        // --- CALENDAR FUNCTIONS (Unchanged) ---
         async function listUpcomingEvents() {
             const now = new Date();
             const maxTime = new Date();
@@ -286,8 +329,7 @@
                     'orderBy': 'startTime',
                 });
             } catch (err) {
-                displayError('Calendar API Error: ' + err.result.error.message);
-                return;
+                throw new Error('Calendar API Error: ' + err.result.error.message);
             }
 
             const events = response.result.items;
@@ -298,7 +340,7 @@
                 return;
             }
 
-            calendarEventsList.innerHTML = ''; // Clear existing events
+            calendarEventsList.innerHTML = ''; 
             let lastDate = '';
 
             events.forEach((event) => {
@@ -337,11 +379,7 @@
         }
 
 
-        // --- TASKS FUNCTIONS ---
-
-        /**
-         * Fetches and displays tasks from the specified list.
-         */
+        // --- TASKS FUNCTIONS (Unchanged) ---
         async function listTasks() {
             tasksList.innerHTML = '<p class="text-gray-500 flex items-center"><i data-lucide="loader-2" class="w-4 h-4 mr-2 animate-spin"></i> Loading tasks...</p>';
 
@@ -360,9 +398,7 @@
                 tasksExternalLink.href = `https://mail.google.com/tasks/canvas?id=${taskListId}&edit=1`;
 
             } catch (err) {
-                tasksList.innerHTML = '<p class="text-red-500 font-semibold">Failed to find task lists. Check authorization or API status.</p>';
-                console.error("Task List Error:", err);
-                return;
+                throw new Error('Failed to find task lists. Check authorization or API status.');
             }
 
             // 2. Fetch Tasks using the ID
@@ -397,19 +433,14 @@
                 });
 
             } catch (err) {
-                tasksList.innerHTML = '<p class="text-red-500 font-semibold">Failed to load tasks. Check authorization.</p>';
-                console.error("Tasks Fetch Error:", err);
+                throw new Error('Failed to load tasks. Check authorization.');
             }
         }
 
-        // Initialize display state
+        // Initial entry point: Start waiting for APIs to load
         window.onload = function() {
-            // Check if user is already authenticated based on session storage
-            if (sessionStorage.getItem('access_token')) {
-                // If a token exists, the maybeEnableAuthButton function will try to use it.
-            } else {
-                showAuthSection();
-            }
+            showAuthSection(); 
+            waitForApiReady();
         };
 
     </script>
