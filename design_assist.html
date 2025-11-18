@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Australian Building Consultant AI</title>
+    <!-- Load Tailwind CSS for modern styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+        }
+        /* Custom scrollbar styling for text areas */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1; /* coolGray-300 */
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background-color: #f1f1f1;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8">
+    <div class="max-w-4xl mx-auto bg-white shadow-xl rounded-xl p-6 md:p-10">
+        <header class="mb-8">
+            <h1 class="text-3xl font-extrabold text-blue-800 mb-2">
+                🇦🇺 Building Brief Analyzer
+            </h1>
+            <p class="text-gray-600">
+                Input a client document (brief, email, or meeting notes) and/or an image sketch to receive an auto-summary and a compliant suggested response.
+            </p>
+        </header>
+
+        <!-- Input Area -->
+        <div class="mb-8">
+            <label for="documentInput" class="block text-lg font-semibold text-gray-700 mb-3">
+                Client Document Text
+            </label>
+            <textarea id="documentInput" rows="10" 
+                class="w-full p-4 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-800 custom-scrollbar" 
+                placeholder="Paste the client brief, architectural requirements, or design notes here.">The client, Mr. and Mrs. Smith, require a new single-story dwelling in Brisbane. Key features include an open-plan living area and a master suite with northern orientation. They emphasized sustainable timber use and a high bushfire attack level (BAL) rating (BAL-40 is anticipated for their block). Design should incorporate modern coastal aesthetics with deep verandahs for shade, adhering strictly to NCC Volume Two requirements for Class 1 buildings. Budget is moderate, aiming for completion by Q3 next year.</textarea>
+        </div>
+        
+        <!-- Image Input Area (NEW) -->
+        <div class="mb-8 p-6 bg-gray-50 rounded-lg border border-gray-200">
+            <label for="imageUpload" class="block text-lg font-semibold text-gray-700 mb-3">
+                Client Sketch/Image (Optional)
+            </label>
+            <input type="file" id="imageUpload" accept="image/*" class="w-full text-sm text-gray-500
+                file:mr-4 file:py-2 file:px-4
+                file:rounded-full file:border-0
+                file:text-sm file:font-semibold
+                file:bg-blue-100 file:text-blue-700
+                hover:file:bg-blue-200"
+                onchange="previewImage(event)">
+            
+            <div id="imagePreviewContainer" class="mt-4 hidden relative">
+                <img id="imagePreview" class="max-w-full h-auto rounded-lg shadow-md border border-gray-300 max-h-80 object-contain mx-auto" alt="Sketch Preview">
+                <button onclick="clearImage()" title="Remove Image" class="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full shadow-lg hover:bg-red-600 transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+        </div>
+        <!-- End Image Input Area -->
+
+
+        <!-- Action Button -->
+        <div class="flex justify-center mb-10">
+            <button id="analyzeButton" onclick="analyzeDocument()" 
+                class="px-8 py-3 bg-green-600 text-white font-bold rounded-full shadow-lg hover:bg-green-700 transition duration-150 ease-in-out disabled:opacity-50 flex items-center">
+                <svg id="buttonIcon" class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                Analyze Brief
+            </button>
+        </div>
+
+        <!-- Output Area -->
+        <div id="loadingIndicator" class="text-center text-blue-600 hidden mb-6">
+            <div class="animate-spin inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mr-2"></div>
+            Analyzing with NCC/AS reference...
+        </div>
+
+        <div id="resultsArea" class="space-y-8 hidden">
+            
+            <!-- Summary Card -->
+            <div class="bg-blue-50 p-6 rounded-lg border border-blue-200">
+                <h2 class="text-xl font-bold text-blue-800 mb-3 flex items-center">
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Client Requirements Summary
+                </h2>
+                <div id="summaryOutput" class="text-gray-700 whitespace-pre-wrap"></div>
+            </div>
+
+            <!-- Response Card -->
+            <div class="bg-green-50 p-6 rounded-lg border border-green-200">
+                <h2 class="text-xl font-bold text-green-800 mb-3 flex items-center">
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 4v-4z"></path></svg>
+                    Suggested Professional Response
+                </h2>
+                <div id="responseOutput" class="text-gray-700 whitespace-pre-wrap"></div>
+                <button onclick="copyToClipboard('responseOutput')" 
+                    class="mt-4 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition text-sm">
+                    Copy Response
+                </button>
+            </div>
+            
+            <!-- Citation Placeholder -->
+            <div id="citationArea" class="text-xs text-gray-500 mt-4 p-4 bg-gray-100 rounded-lg hidden">
+                <h3 class="font-semibold text-gray-600 mb-2">Grounded Sources:</h3>
+                <ul id="sourcesList" class="list-disc list-inside space-y-1"></ul>
+            </div>
+        </div>
+
+        <!-- Custom Modal for Errors -->
+        <div id="errorModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden z-50 flex items-center justify-center">
+            <div class="bg-white rounded-lg p-6 max-w-sm mx-4 shadow-2xl">
+                <h3 class="text-xl font-bold text-red-600 mb-4">API Error</h3>
+                <p id="errorMessage" class="text-gray-700 mb-6"></p>
+                <button onclick="document.getElementById('errorModal').classList.add('hidden')" class="w-full py-2 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600">Close</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script type="module">
+        // The API key is an empty string, relying on the environment's auto-injection.
+	// --- FIX FOR 403 ERROR ---
+	// NOTE: For local testing only! Do not deploy a public site with this key visible.
+	const apiKey = "AIzaSyBI8P6-YMWRKbnlGdg1WhoOv5PHhvxSNTI"; 
+	const apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=";
+
+        // --- Marker for content separation in the simplified text response ---
+        const SUMMARY_MARKER = "---SUMMARY---";
+        const RESPONSE_MARKER = "---RESPONSE---";
+
+
+        /**
+         * Simple utility to show a custom error message.
+         * @param {string} message 
+         */
+        function showError(message) {
+            document.getElementById('errorMessage').textContent = message;
+            document.getElementById('errorModal').classList.remove('hidden');
+        }
+
+        /**
+         * Copies text from an element to the clipboard.
+         */
+        window.copyToClipboard = function(elementId) {
+            const element = document.getElementById(elementId);
+            const textToCopy = element.textContent;
+            
+            const tempInput = document.createElement('textarea');
+            tempInput.value = textToCopy;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    const copyButton = element.nextElementSibling;
+                    const originalText = copyButton.textContent;
+                    copyButton.textContent = 'Copied!';
+                    setTimeout(() => {
+                        copyButton.textContent = originalText;
+                    }, 2000);
+                }
+            } catch (err) {
+                console.error('Copy failed:', err);
+                showError('Failed to copy text. Please copy manually.');
+            }
+            document.body.removeChild(tempInput);
+        };
+
+        /**
+         * Implements exponential backoff for API calls.
+         */
+        async function fetchWithBackoff(fetcher, maxRetries = 5) {
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    const response = await fetcher();
+                    if (response.status !== 429) { 
+                        return response;
+                    }
+                } catch (error) {
+                    if (i === maxRetries - 1) throw error;
+                }
+                const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
+                await new Promise(resolve => setTimeout(resolve, delay));
+            }
+            throw new Error('API request failed after multiple retries.');
+        }
+        
+        /**
+         * Converts a File object to a Base64 data URL.
+         */
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                if (!file) {
+                    reject(new Error("No file provided."));
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = () => {
+                    const base64String = reader.result.split(',')[1]; 
+                    const mimeType = file.type;
+                    resolve({ data: base64String, mimeType: mimeType });
+                };
+                reader.onerror = error => reject(error);
+                reader.readAsDataURL(file);
+            });
+        }
+
+        window.previewImage = function(event) {
+            const file = event.target.files[0];
+            const preview = document.getElementById('imagePreview');
+            const container = document.getElementById('imagePreviewContainer');
+            if (file) {
+                preview.src = URL.createObjectURL(file);
+                container.classList.remove('hidden');
+            } else {
+                container.classList.add('hidden');
+            }
+        };
+
+        window.clearImage = function() {
+            document.getElementById('imageUpload').value = '';
+            document.getElementById('imagePreviewContainer').classList.add('hidden');
+        };
+
+
+        window.analyzeDocument = async function() {
+            const documentText = document.getElementById('documentInput').value.trim();
+            const imageInput = document.getElementById('imageUpload');
+            const imageFile = imageInput.files[0];
+
+            const analyzeButton = document.getElementById('analyzeButton');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const resultsArea = document.getElementById('resultsArea');
+            const summaryOutput = document.getElementById('summaryOutput');
+            const responseOutput = document.getElementById('responseOutput');
+            const citationArea = document.getElementById('citationArea');
+            const sourcesList = document.getElementById('sourcesList');
+
+            if (!documentText && !imageFile) {
+                showError("Please paste a client document, upload a sketch, or both, to begin analysis.");
+                return;
+            }
+
+            // --- Image Processing (Async) ---
+            let imagePart = null;
+            if (imageFile) {
+                // Client-side size check
+                const MAX_FILE_SIZE_BYTES = 3.5 * 1024 * 1024; // 3.5 MB limit
+                if (imageFile.size > MAX_FILE_SIZE_BYTES) {
+                    showError(`Image file is too large (${(imageFile.size / (1024 * 1024)).toFixed(2)}MB). Please upload an image smaller than 3.5 MB.`);
+                    return;
+                }
+
+                try {
+                    const base64Data = await fileToBase64(imageFile);
+                    imagePart = {
+                        inlineData: {
+                            mimeType: base64Data.mimeType,
+                            data: base64Data.data
+                        }
+                    };
+                } catch (e) {
+                    showError(`Error processing image file: ${e.message}`);
+                    return;
+                }
+            }
+
+
+            // --- UI State Update (Start) ---
+            analyzeButton.disabled = true;
+            analyzeButton.textContent = 'Analyzing...';
+            analyzeButton.classList.remove('hover:bg-green-700');
+            loadingIndicator.classList.remove('hidden');
+            resultsArea.classList.add('hidden');
+            citationArea.classList.add('hidden');
+            summaryOutput.textContent = '...';
+            responseOutput.textContent = '...';
+            sourcesList.innerHTML = '';
+
+
+            // --- Gemini API Configuration (Simplified Text Response) ---
+            const systemPrompt = "You are an expert Australian architectural and building consultant. Your analysis must be grounded in the National Construction Code (NCC), relevant Australian Standards (AS), and current Australian residential and commercial design trends. Your task is to analyze client briefs and provide a concise summary and a professional, compliant suggested response, using your access to real-time information to ensure regulatory accuracy. YOU MUST use the exact markers provided for separation.";
+
+            
+            let queryText = `Analyze the client document and/or image. 
+            
+            First, generate a concise, detailed summary of the client's core requirements, location, budget, timeline, and all stated design and compliance preferences (e.g., BAL rating, specific materials, NCC volume). Incorporate observations from the sketch if provided.
+
+            Second, generate a professional, supportive, and compliant suggested response to the client. This response must confirm understanding of the NCC/AS requirements (like BAL-40 or NCC Vol. Two) and discuss next steps.
+            
+            Format your ENTIRE output as follows:
+            
+            ${SUMMARY_MARKER}
+            [The summary text here]
+            ${RESPONSE_MARKER}
+            [The suggested response text here]
+
+            CLIENT DOCUMENT:\n---${documentText}---`;
+
+            // Construct the parts array for the API payload
+            const contentsParts = [];
+            contentsParts.push({ text: queryText });
+            if (imagePart) {
+                contentsParts.push(imagePart);
+            }
+
+
+            // The payload no longer includes the structured response schema
+            const payload = {
+                contents: [{ parts: contentsParts }], 
+                // Use Google Search for grounding on Australian Standards and NCC
+                tools: [{ "google_search": {} }], 
+                systemInstruction: {
+                    parts: [{ text: systemPrompt }]
+                }
+            };
+            
+            const fetcher = () => fetch(apiUrl + apiKey, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            try {
+                const response = await fetchWithBackoff(fetcher);
+
+                if (!response.ok) {
+                    // Check for 400 specifically, as it suggests a problem with the request payload
+                    if (response.status === 400) {
+                        const errorBody = await response.text();
+                        console.error("400 Error Response:", errorBody);
+                        // If we still get a 400 here, it means the API key/base URL setup is the issue.
+                        throw new Error(`HTTP error! status: 400 Bad Request. The request structure has been simplified, so this points to a fundamental issue with the API service or environment setup.`);
+                    }
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                const candidate = result.candidates?.[0];
+
+                if (!candidate || !candidate.content?.parts?.[0]?.text) {
+                    showError("The model returned an empty or invalid response. Please try again or refine the input.");
+                    return;
+                }
+
+                // 1. Extract and Parse Text Response using markers
+                const rawText = candidate.content.parts[0].text.trim();
+                
+                // Use regex to robustly find the sections based on the markers
+                const summaryMatch = rawText.match(new RegExp(`${SUMMARY_MARKER}\n?([\\s\\S]*?)\n?${RESPONSE_MARKER}`));
+                const responseMatch = rawText.match(new RegExp(`${RESPONSE_MARKER}\n?([\\s\\S]*)`));
+                
+                let clientSummary = "Could not parse summary from response.";
+                let suggestedResponse = "Could not parse response from model output. Check console for raw output.";
+
+                if (summaryMatch && summaryMatch[1]) {
+                    clientSummary = summaryMatch[1].trim();
+                }
+                if (responseMatch && responseMatch[1]) {
+                    suggestedResponse = responseMatch[1].trim();
+                }
+
+                summaryOutput.textContent = clientSummary;
+                responseOutput.textContent = suggestedResponse;
+
+                // 2. Extract Grounding Sources (Citations)
+                const groundingMetadata = candidate.groundingMetadata;
+                let sources = [];
+                if (groundingMetadata && groundingMetadata.groundingAttributions) {
+                    sources = groundingMetadata.groundingAttributions
+                        .map(attribution => ({
+                            uri: attribution.web?.uri,
+                            title: attribution.web?.title,
+                        }))
+                        .filter(source => source.uri && source.title);
+                }
+                
+                if (sources.length > 0) {
+                    citationArea.classList.remove('hidden');
+                    sources.forEach(source => {
+                        const li = document.createElement('li');
+                        const a = document.createElement('a');
+                        a.href = source.uri;
+                        a.target = "_blank";
+                        a.textContent = source.title;
+                        a.className = "text-blue-600 hover:text-blue-800 hover:underline";
+                        li.appendChild(a);
+                        sourcesList.appendChild(li);
+                    });
+                }
+
+
+            } catch (error) {
+                console.error("Gemini API Error:", error);
+                showError(`A network or API error occurred: ${error.message}`);
+            } finally {
+                // --- UI State Update (End) ---
+                analyzeButton.disabled = false;
+                analyzeButton.textContent = 'Analyze Brief';
+                analyzeButton.classList.add('hover:bg-green-700');
+                loadingIndicator.classList.add('hidden');
+                resultsArea.classList.remove('hidden');
+            }
+        }
+    </script>
+</body>
+</html>

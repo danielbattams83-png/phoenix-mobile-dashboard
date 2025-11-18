@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Renovation Architect</title>
+
+<meta name="theme-color" content="#FF7518"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+
+<style>
+  /* ======================================================
+     ORANGE/GREY THEME — white base, pumpkin orange accent
+     ====================================================== */
+  :root{
+    --bg:#FFFFFF;                 /* white */
+    --bg-2:#F8F8FF;               /* near white for alt sections */
+    --ink:#21243B;                /* high contrast text (dark blue-grey) */
+    --muted:#808080;              /* secondary text/muted grey */
+    --line:#E0E0E0;               /* light grey grid lines/dividers */
+    --glow-1:#FF7518;             /* PUMPKIN ORANGE — primary accent */
+    --glow-2:#FF9A33;             /* Lighter orange for gradients */
+    --accent:#7CFB7C;             /* neon green tick (still useful for success) */
+    --danger:#FF5577;             /* neon red/pink (still useful for danger) */
+    --card-radius:16px;
+    --shadow:0 4px 12px rgba(0,0,0,.08); /* subtle shadow for depth */
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; background: var(--bg); color:var(--ink);
+    font-family: Inter, ui-sans-serif, system-ui, "Segoe UI", Roboto, Arial, sans-serif;
+    -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+  }
+  .container{max-width:980px; margin:0 auto; padding:0 16px}
+
+  /* REMOVED .bg-grid STYLING (Neon Grid) */
+  .bg-grid::before, .bg-grid::after{ content:""; position:fixed; inset:0; z-index:-2; background:var(--bg); }
+
+  /* Header */
+  header{
+    /* Simple solid orange bar at the top */
+    background: var(--glow-1);
+    border-bottom:none;
+    box-shadow:var(--shadow);
+  }
+  header .shell{ padding:18px 0; color:#fff }
+  .logo-wrap{
+    width:72px;height:72px;border-radius:36px; display:grid;place-items:center;
+    background:rgba(255,255,255,.2); border:2px solid rgba(255,255,255,.5);
+    box-shadow: 0 0 8px rgba(255,255,255,.1), 0 0 18px rgba(255,255,255,.2);
+  }
+  .brand-logo{
+    /* Use the orange accent for the logo frame shadow */
+    width:64px;height:64px; object-fit:contain; border-radius:55%;
+    background:rgba(255,255,255,.9);
+    box-shadow: 0 0 10px rgba(0,0,0,.1), 0 0 18px var(--glow-2);
+  }
+  h1{font-size: clamp(1.3rem, 2.4vw + 1rem, 2rem); margin:0; text-shadow: none}
+  .sub{font-size:.9rem; opacity:.9}
+
+  /* Card shell */
+  .card{
+    /* White background with subtle border/shadow */
+    background: var(--bg);
+    border:1px solid var(--line); border-radius: var(--card-radius);
+    box-shadow: var(--shadow);
+  }
+  .section{ padding:16px }
+  @media (min-width: 960px){ .section{ padding:22px } }
+
+  /* Tabs */
+  .tabs{display:flex; gap:6px; border-bottom:1px solid var(--line); padding:4px}
+  .tab{
+    appearance:none; border:none; background:transparent; color:var(--muted); cursor:pointer;
+    padding:10px 12px; border-radius:10px 10px 0 0; font-weight:700;
+  }
+  /* Active tab is orange text with orange underline */
+  .tab.active{ color:var(--glow-1); box-shadow: inset 0 -3px 0 var(--glow-1), 0 0 0 var(--glow-1) }
+
+  /* Inputs */
+  .field{display:flex; flex-direction:column; gap:6px}
+  label{color:var(--ink); font-size:.85rem}
+  .input, .select, .textarea{
+    /* Light background, dark text, subtle border */
+    width:100%; padding:12px 12px; border:1px solid var(--line); border-radius:12px;
+    background:var(--bg-2); color:var(--ink); outline:none;
+    box-shadow: inset 0 0 0 1px transparent, 0 0 0 0 transparent;
+    transition: box-shadow .15s ease, border-color .15s ease;
+  }
+  /* Focus is subtle orange border */
+  .input:focus, .select:focus, .textarea:focus{
+    border-color:var(--glow-1); box-shadow: 0 0 0 3px rgba(255,117,24,.15);
+  }
+  input[type="range"]{ width:100%; accent-color: var(--glow-1) }
+
+  /* Chips / radios */
+  .chip{
+    display:flex; align-items:center; gap:10px; padding:10px 12px;
+    border:1px solid var(--line); border-radius:12px; background:var(--bg-2); cursor:pointer;
+    transition: box-shadow .15s ease, transform .06s ease, border-color .2s ease;
+  }
+  /* Subtle grey hover */
+  .chip:hover{ box-shadow: 0 2px 4px rgba(0,0,0,.04); border-color:var(--muted) }
+  /* When selected, show orange border (used for checkboxes/multiple select) */
+  .chip input:checked + span {
+    border-color: var(--glow-1); 
+    box-shadow: 0 0 0 3px rgba(255,117,24,.2); 
+    padding: 2px 4px; /* Slight visual adjustment */
+    border-radius: 8px;
+    background: rgba(255,117,24,.05);
+  }
+  .chip input{ accent-color: var(--glow-1) }
+
+  /* Boxes */
+  .box{
+    border:1px solid var(--line); border-radius:12px; background:var(--bg); padding:14px
+  }
+  .alt{
+    /* Lighter background for alt boxes */
+    background: var(--bg-2); border-color:var(--line);
+    box-shadow: none;
+  }
+  .divider{border-top:1px solid var(--line); margin:12px 0}
+
+  /* Layout grid: mobile-first */
+  .grid{display:grid; gap:14px}
+  .grid-2-lg{grid-template-columns:1fr}
+  @media (min-width: 980px){ .grid-2-lg{grid-template-columns:1fr 1fr} }
+
+  /* Area Inputs grid — MOBILE ALIGNMENT FIX */
+  .ai-grid{ display:grid; gap:10px; grid-template-columns:1fr; }
+  @media (min-width: 540px){ .ai-grid{ grid-template-columns: repeat(3, 1fr); } }
+  /* Carport input takes full width on small screens */
+  @media (min-width: 540px){ #carportAreaField{ grid-column: 1 / span 3; } }
+  @media (min-width: 768px){ #carportAreaField{ grid-column: 1 / span 1; } }
+
+
+  /* Buttons */
+  .btn{
+    appearance:none; border:1px solid var(--line); background:var(--bg-2); color:var(--ink);
+    padding:12px 14px; border-radius:12px; cursor:pointer; font-weight:800; letter-spacing:.2px;
+    transition: box-shadow .15s ease, transform .06s ease, background .2s ease, border-color .2s ease;
+  }
+  .btn:hover{ box-shadow: 0 4px 8px rgba(0,0,0,.05); border-color:var(--muted) }
+  .btn:active{transform:translateY(1px)}
+  /* Primary button is Orange, with dark text */
+  .btn-primary{
+    background: var(--glow-1); border-color:var(--glow-1); color:#fff;
+    text-shadow: none;
+  }
+  /* Dark button is a solid grey color */
+  .btn-dark{background:var(--ink); color:#fff; border-color:var(--ink)}
+
+  /* Sticky action bar (mobile-first) */
+  .actionbar{
+    position:sticky; bottom:0; z-index:20;
+    padding:10px 12px calc(10px + env(safe-area-inset-bottom));
+    background: rgba(255,255,255,.9); /* Semi-transparent white */
+    border-top:1px solid var(--line); border-radius:12px;
+    display:flex; gap:10px; flex-wrap:wrap;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 -4px 12px rgba(0,0,0,.08);
+  }
+  .actionbar .btn{flex:1 1 140px}
+
+  /* Saved list */
+  .saved-item{
+    display:flex; justify-content:space-between; align-items:center; padding:12px;
+    border:1px solid var(--line); border-radius:12px; background:var(--bg-2);
+  }
+  .saved-actions button{margin-left:8px}
+
+  /* Utility */
+  .hidden{display:none}
+  .small{font-size:.9rem; color:var(--muted)}
+  .micro{font-size:.8rem; color:var(--muted)}
+  .pill{font-family: ui-monospace, Menlo, Consolas, monospace; font-size:.75rem; padding:3px 7px; border:1px solid var(--line); border-radius:8px; background:var(--bg-2)}
+  .muted{color:var(--muted)}
+
+  /* Live Preview Colors */
+  #pvMin, #pvMax, #totalMin, #totalMax {
+    /* Changing the success color to a strong orange */
+    color: var(--glow-1) !important;
+    text-shadow: none !important;
+  }
+  .small.muted svg path {
+    /* Changing the icon color to orange */
+    stroke: var(--glow-1) !important;
+  }
+
+  /* Toasts */
+  .toast-host{position:fixed; left:50%; transform:translateX(-50%); bottom:16px; display:flex; flex-direction:column; gap:8px; z-index:50}
+  .toast{padding:10px 12px; border-radius:12px; color:#fff; font-size:.95rem; animation:fadeup .18s ease-out; backdrop-filter: blur(4px);
+         background: var(--glow-1); box-shadow:var(--shadow)}
+  /* Error toast remains red/pink */
+  .err{background:linear-gradient(90deg,#ff5577,#ff2bd6)}
+  @keyframes fadeup{from{opacity:.0; transform:translate(-50%, 8px)} to{opacity:1; transform:translate(-50%, 0)}}
+</style>
+</head>
+<body class="bg-grid">
+
+<header>
+  <div class="container shell">
+    <div style="display:flex;gap:15px;align-items:center">
+      <div class="logo-wrap">
+        <img class="brand-logo" src="https://static.wixstatic.com/media/cd24f5_912330da30e24a2d9d4dd70e6388de32~mv2.png"
+             alt="Phoenix Projects Logo"
+             referrerpolicy="no-referrer"/>
+      </div>
+      <div style="flex:1 1 auto">
+        <h1>Phoenix Project - Ballpark Estimator</h1>
+        <div class="sub">Residential Renovations & Extensions</div>
+      </div>
+      <button id="btnSelfCheck" class="btn btn-dark">Self‑Check</button>
+    </div>
+  </div>
+</header>
+
+<main class="container" style="margin-top:-12px">
+  <div class="card section">
+
+    <div class="tabs">
+      <button class="tab active" data-tab="inputs">Project Inputs</button>
+      <button class="tab" data-tab="estimate">Estimate & Export</button>
+      <button class="tab" data-tab="saved">Saved</button>
+    </div>
+
+    <section id="tab-inputs" class="section" style="padding-top:14px">
+      <div class="grid grid-2-lg">
+        <div class="grid" style="gap:14px">
+          <div class="box alt">
+            <h2>Project Details</h2>
+            <div class="grid" style="gap:10px; margin-top:10px">
+              <input id="estimateName" class="input" placeholder="Estimate Name (e.g., Smith Kitchen Reno)"/>
+              <div class="grid" style="gap:10px; grid-template-columns:1fr 1fr">
+                <input id="clientName" class="input" placeholder="Client Name"/>
+                <select id="region" class="select">
+                  <option value="Brisbane">Brisbane (Base)</option>
+                  <option value="Gold Coast">Gold Coast (+5%)</option>
+                  <option value="Sunshine Coast">Sunshine Coast (+10%)</option>
+                  <option value="Regional QLD">Regional QLD (+15%)</option>
+                </select>
+              </div>
+              <input id="projectAddress" class="input" placeholder="Project Address (e.g., 123 Main St, Suburb)"/>
+            </div>
+          </div>
+
+          <div class="box">
+            <h2>Project Type (Select All Applicable)</h2>
+            <div id="projectTypeBox" class="grid" style="gap:10px; margin-top:10px"></div>
+            <div class="micro muted" style="margin-top:6px">Rates are percentage uplifts on the area costs. Scaffolding is included automatically for Second Storey Addition.</div>
+          </div>
+
+          <div class="box">
+            <h2>Area Inputs (m²)</h2>
+            <div class="ai-grid" style="margin-top:10px">
+              <div class="field">
+                <label>Living / Office (m²)</label>
+                <input id="livingArea" type="number" step="0.1" min="0" class="input" value="0">
+              </div>
+              <div class="field">
+                <label>New Kitchen (m²)</label>
+                <input id="kitchenArea" type="number" step="0.1" min="0" class="input" value="0">
+              </div>
+              <div class="field">
+                <label>Bathroom Upgrade (m²)</label>
+                <input id="bathroomArea" type="number" step="0.1" min="0" class="input" value="0">
+              </div>
+              <div class="field">
+                <label>Wet Areas (Other) (m²)</label>
+                <input id="wetArea" type="number" step="0.1" min="0" class="input" value="0">
+              </div>
+              <div class="field" id="carportAreaField">
+                <label>Double Carport (m²)</label>
+                <input id="carportArea" type="number" step="0.1" min="0" class="input" value="0">
+              </div>
+              <div class="field">
+                <label>Retaining Walls (m²)</label>
+                <input id="retainingWallsArea" type="number" step="0.1" min="0" class="input" value="0">
+              </div>
+            </div>
+          </div>
+
+          <div class="box">
+            <h2>Quality & Fixed Costs</h2>
+            <div class="field" style="margin-top:8px">
+              <label>Quality: <b id="qualityLabel">Mid‑Range</b></label>
+              <input id="quality" type="range" min="0" max="2" step="1" value="1">
+              <div class="grid" style="grid-template-columns:1fr 1fr 1fr; color:var(--muted); font-size:.8rem">
+                <span>Basic</span><span style="text-align:center">Mid‑Range</span><span style="text-align:right">High‑End</span>
+              </div>
+            </div>
+            <div class="grid" style="gap:8px; margin-top:8px">
+              <label class="chip"><input id="scaffolding" type="checkbox"><span>Scaffolding</span><span class="micro muted" id="scaffoldNote">(Required for some roofs)</span></label>
+              <label class="chip"><input id="complexSite" type="checkbox"><span>Complex Site Access</span><span class="micro muted">(Steep / limited access)</span></label>
+              <label class="chip"><input id="liftExistingHouse" type="checkbox"><span>Lift Existing House</span><span class="micro muted" id="liftNote">(Fixed cost for raise/restump)</span></label>
+              <label class="chip"><input id="designFees" type="checkbox"><span>Design & Approval Fees</span><span class="micro muted">(Architect / Engineer / Certifier)</span></label>
+              <label class="chip"><input id="councilRelaxation" type="checkbox"><span>Council Relaxation (Siting)</span><span class="micro muted" id="relaxationNote">(Setback approval - Regionally adjusted)</span></label>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid" style="gap:14px">
+          <div class="box alt">
+            <div class="small muted" style="margin-bottom:6px; display:flex; align-items:center; gap:8px">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h16M4 17h16" stroke="#00E6FF" stroke-width="2" stroke-linecap="round"/></svg>
+              Live Budget Preview
+            </div>
+            <div class="box" style="border-color:var(--line); box-shadow: var(--shadow)">
+              <div class="small muted">Total Project Budget Range</div>
+              <div id="pvMin" style="font-weight:900; font-size:1.6rem;">$0</div>
+              <div id="pvMax" style="font-weight:900; font-size:1.6rem;">to $0</div>
+              <div id="pvRate" class="micro" style="margin-top:6px">Enter areas to get an estimate.</div>
+              <div style="display:flex; gap:6px; margin-top:6px">
+                <span class="pill" id="pvUplift"></span>
+                <span class="pill" id="pvRegion"></span>
+              </div>
+            </div>
+            <div class="micro muted" style="margin-top:6px">Switch to <b>Estimate & Export</b> for a printable breakdown.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="tab-estimate" class="section hidden">
+      <div id="estimateOutput" class="grid" style="gap:14px">
+        <div class="box alt">
+          <div class="small muted">Total Project Budget Range</div>
+          <div id="totalMin" style="font-weight:900; font-size:1.6rem;">$0</div>
+          <div id="totalMax" style="font-weight:900; font-size:1.6rem;">to $0</div>
+          <div id="totalPerMSQ" class="micro" style="margin-top:6px">Enter areas to get an estimate.</div>
+          <div style="display:flex; gap:6px; margin-top:6px">
+            <span class="pill" id="projectUplift"></span>
+            <span class="pill" id="regionAdj"></span>
+          </div>
+        </div>
+
+        <div class="box">
+          <h3>Estimate Breakdown</h3>
+          <div class="box" style="background:var(--bg); border-style:dashed">
+            <div class="grid" style="gap:10px; grid-template-columns:1fr 1fr 1fr">
+              <div><span class="micro muted">Project Types</span><br><b id="summaryProjectType">—</b></div>
+              <div><span class="micro muted">Total Area</span><br><b><span id="summaryTotalArea">0</span> m²</b></div>
+              <div><span class="micro muted">Quality</span><br><b id="summaryQuality">Mid‑Range</b></div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="grid" style="gap:10px">
+            <div>
+              <strong>Area Costs</strong>
+              <div class="grid" style="margin-top:6px; gap:6px">
+                <div style="display:flex; justify-content:space-between"><span>Living / Office (m²)</span><span id="costLiving">0</span></div>
+                <div style="display:flex; justify-content:space-between"><span>New Kitchen (m²)</span><span id="costKitchen">0</span></div>
+                <div style="display:flex; justify-content:space-between"><span>Bathroom Upgrade (m²)</span><span id="costBathroom">0</span></div>
+                <div style="display:flex; justify-content:space-between"><span>Wet Areas (Other) (m²)</span><span id="costWet">0</span></div>
+                <div style="display:flex; justify-content:space-between"><span>Double Carport (m²)</span><span id="costCarport">0</span></div>
+                <div style="display:flex; justify-content:space-between"><span>Retaining Walls (m²)</span><span id="costRetaining">0</span></div>
+              </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div>
+              <strong>Uplifts & Fixed Costs</strong>
+              <div class="grid" style="margin-top:6px; gap:6px">
+                <div style="display:flex; justify-content:space-between"><span>Project Type Uplift</span><span id="costUplift">0</span></div>
+                <div style="display:flex; justify-content:space-between"><span>Regional Adjustment</span><span id="costRegional">0</span></div>
+                <div id="specificDriversList" class="grid" style="gap:6px">
+                    <div style="display:flex; justify-content:space-between"><span>Specific Cost Drivers</span><span id="costDrivers">0</span></div>
+                </div>
+                <div style="display:flex; justify-content:space-between"><span>Fixed Project Costs (Lift House)</span><span id="costFixed">0</span></div>
+                <div style="display:flex; justify-content:space-between; font-weight:700; border-top:1px solid var(--line); padding-top:8px"><span>Subtotal Cost (pre-range)</span><span id="subtotalCost">0</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="actionbar">
+          <button id="btnSave" class="btn btn-primary">Save</button>
+          <button id="btnPNG"  class="btn btn-dark">Export PNG</button>
+          <button id="btnPDF"  class="btn btn-dark">Export PDF</button>
+        </div>
+        <div class="micro muted">If your browser blocks downloads, we’ll open the file in a new tab so you can save it manually.</div>
+      </div>
+    </section>
+
+    <section id="tab-saved" class="section hidden">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+        <h3>Saved Estimates</h3>
+        <div style="display:flex; gap:8px">
+          <button id="btnExportJSON" class="btn">Export All (JSON)</button>
+          <label class="btn" style="cursor:pointer">Import JSON <input id="importJSON" type="file" accept="application/json" style="display:none"></label>
+        </div>
+      </div>
+      <div class="micro muted" style="margin-top:6px">Storage: <b>Local</b></div>
+      <div id="savedList" class="grid" style="gap:10px; margin-top:10px"></div>
+    </section>
+  </div>
+</main>
+
+<div id="toastHost" class="toast-host"></div>
+
+<script>
+/* ====================================
+   Utilities & Formatting (no libraries)
+   ==================================== */
+const $ = (s, r=document)=>r.querySelector(s);
+const $$ = (s, r=document)=>Array.from(r.querySelectorAll(s));
+const fmt$ = v => new Intl.NumberFormat("en-AU",{style:"currency",currency:"AUD",maximumFractionDigits:0}).format(Math.round(v||0));
+const fmtN = v => new Intl.NumberFormat("en-AU",{maximumFractionDigits:1}).format(v||0); // Changed to 1 decimal place for area
+const fmtP = v => ((v)*100).toFixed(0)+"%";
+const uuid = () => (crypto?.randomUUID?.() || ('id-'+Date.now()+'-'+Math.random().toString(16).slice(2)));
+function toast(msg, tone="ok", ms=2600){ const host=$("#toastHost"); const n=document.createElement("div"); n.className=`toast ${tone==="err"?"err":""}`; n.textContent=msg; host.appendChild(n); setTimeout(()=> n.remove(), ms); }
+function downloadBlob(blob, filename){ const a=document.createElement("a"); const url=URL.createObjectURL(blob); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 0); }
+function openDataUrl(dataUrl){ const w=window.open(); if (w) w.document.write(`<iframe src="${dataUrl}" style="border:0;width:100%;height:100%"></iframe>`); }
+
+/* ======================
+   Rates & Calculation
+   ====================== */
+const RATES = {
+  // --- UPDATED AREA RATES (2024/2025 Ballpark for QLD residential) ---
+  // [Basic, Mid-Range, High-End]
+  livingArea:[2500, 3500, 4500],        
+  wetArea:[4500, 5500, 7000],           
+  kitchenArea:[4000, 5000, 6500],       
+  bathroomArea:[5500, 7000, 9000],      
+  carportArea:[800, 1200, 1800],        
+  retainingWallsArea:[550, 750, 1000], 
+
+  // --- PROJECT TYPE ADJUSTMENTS (Uplift on Area Costs) ---
+  projectTypeAdjustments:{
+    "Simple Internal Renovation":0.00, 
+    "Kitchen and Bathroom Renovation":0.08, 
+    "Garage/Shed Conversion":0.05, 
+    "Ground Floor Extension":0.15,
+    "Double Carport":0.03, 
+    "Second Storey Addition":0.35, 
+    "Raise & Build Under":0.40
+  },
+  
+  // --- FIXED COSTS ---
+  // Key names should be display names for reporting
+  fixedCostDrivers:{ 
+    Scaffolding:15000, 
+    "Complex Site Access":10000, 
+    "Design & Approval Fees":15000 
+  },
+  // Key name must match the ID of the driver checkbox
+  liftFixedCost: { id: "liftExistingHouse", label: "Lift Existing House", cost: 45000 },
+
+  // --- REGIONAL ADJUSTMENTS ---
+  regionalAdjustments:{ "Brisbane":0, "Gold Coast":0.05, "Sunshine Coast":0.10, "Regional QLD":0.15 },
+
+  // --- NEW: REGIONAL FIXED COSTS ---
+  regionalFixedCosts: {
+    councilRelaxation: {
+      label: "Council Relaxation (Siting)",
+      costs: {
+        "Brisbane": 3000,
+        "Gold Coast": 3500,      
+        "Sunshine Coast": 4000,  
+        "Regional QLD": 4500     
+      }
+    }
+  }
+};
+const PROJECT_TYPES = Object.keys(RATES.projectTypeAdjustments);
+const QUALITY_LABELS = ["Basic","Mid‑Range","High‑End"];
+
+function computeEstimate(inputs, R=RATES){
+  const { livingArea=0, kitchenArea=0, bathroomArea=0, wetArea=0, carportArea=0, retainingWallsArea=0, qualityIndex=1, region="Brisbane", projectTypes=[],
+          drivers:{ scaffolding=false, complexSite=false, liftExistingHouse=false, designFees=false, councilRelaxation=false }={} } = inputs;
+
+  const areaInputs = { livingArea, kitchenArea, bathroomArea, wetArea, carportArea };
+  const costInputs = {
+    costLiving: (livingArea||0)*R.livingArea[qualityIndex],
+    costKitchen: (kitchenArea||0)*R.kitchenArea[qualityIndex],
+    costBathroom: (bathroomArea||0)*R.bathroomArea[qualityIndex],
+    costWet: (wetArea||0)*R.wetArea[qualityIndex],
+    costCarport: (carportArea||0)*R.carportArea[qualityIndex],
+    costRetaining: (retainingWallsArea||0)*R.retainingWallsArea[qualityIndex]
+  };
+
+  const totalProjectArea = (livingArea||0)+(kitchenArea||0)+(bathroomArea||0)+(wetArea||0); 
+  const areaCostsInternal = costInputs.costLiving + costInputs.costKitchen + costInputs.costBathroom + costInputs.costWet;
+  
+  // Calculate total uplift from selected project types
+  let maxUpliftRate = 0;
+  projectTypes.forEach(type => {
+    maxUpliftRate = Math.max(maxUpliftRate, R.projectTypeAdjustments[type] || 0);
+  });
+  const upliftFactor = 1 + maxUpliftRate;
+  
+  const areaCostsUplifted = areaCostsInternal * upliftFactor;
+  
+  // FIXED COST DRIVERS CALCULATION
+  const activeDrivers = [];
+  let specificCostDrivers = 0;
+
+  if (scaffolding) { 
+    specificCostDrivers += R.fixedCostDrivers.Scaffolding;
+    activeDrivers.push({label: 'Scaffolding', cost: R.fixedCostDrivers.Scaffolding});
+  }
+  if (complexSite) { 
+    specificCostDrivers += R.fixedCostDrivers["Complex Site Access"];
+    activeDrivers.push({label: 'Complex Site Access', cost: R.fixedCostDrivers["Complex Site Access"]});
+  }
+  if (designFees) { 
+    specificCostDrivers += R.fixedCostDrivers["Design & Approval Fees"];
+    activeDrivers.push({label: 'Design & Approval Fees', cost: R.fixedCostDrivers["Design & Approval Fees"]});
+  }
+  if (councilRelaxation) {
+    const cost = R.regionalFixedCosts.councilRelaxation.costs[region] || R.regionalFixedCosts.councilRelaxation.costs["Brisbane"];
+    specificCostDrivers += cost;
+    activeDrivers.push({label: R.regionalFixedCosts.councilRelaxation.label, cost: cost});
+  }
+  
+  // Fixed cost (Lift House) is separated
+  const fixedProjectCosts = liftExistingHouse ? R.liftFixedCost.cost : 0;
+
+  // Subtotal is all costs BEFORE regional adjustment and min/max range
+  const subtotal = areaCostsUplifted + costInputs.costCarport + costInputs.costRetaining + fixedProjectCosts + specificCostDrivers;
+  
+  // Apply regional adjustment
+  const regionAdj = 1 + (R.regionalAdjustments[region]||0);
+  const totalAdjusted = subtotal * regionAdj;
+  
+  // Final min/max budget range
+  const minBudget = totalAdjusted * 0.90;
+  const maxBudget = totalAdjusted * 1.15;
+  
+  // Per m² calculations for display (Internal Area Only)
+  const baseAreaOnly = totalProjectArea > 0 ? areaCostsInternal / totalProjectArea : 0;
+  const blendedAllIn = totalProjectArea > 0 ? totalAdjusted / totalProjectArea : 0;
+
+  return { 
+    totals:{ minBudget, maxBudget, subtotal:totalAdjusted, totalProjectArea, regionAdj, upliftFactor },
+    parts:{ 
+        rateLiving: R.livingArea[qualityIndex], rateKitchen: R.kitchenArea[qualityIndex], rateBathroom: R.bathroomArea[qualityIndex], rateWet: R.wetArea[qualityIndex], rateCarport: R.carportArea[qualityIndex], rateRet: R.retainingWallsArea[qualityIndex], 
+        ...costInputs, fixedProjectCosts, specificCostDrivers, baseAreaOnly, blendedAllIn, maxUpliftRate, areaCostsInternal, areaCostsUplifted, activeDrivers
+    }
+  };
+}
+
+/* ======================
+   State, Inputs, Outputs
+   ====================== */
+function renderProjectTypes(){
+  const box = $("#projectTypeBox"); box.innerHTML="";
+  PROJECT_TYPES.forEach((label,i)=>{
+    const id = "pt_"+i;
+    const el = document.createElement("label");
+    el.className="chip";
+    el.innerHTML = `<input id="${id}" type="checkbox" name="projectType" value="${label}"><span>${label}</span>`;
+    box.appendChild(el);
+  });
+  box.addEventListener("change", recalc);
+}
+
+function updateRelaxationNote(region){
+    const cost = RATES.regionalFixedCosts.councilRelaxation.costs[region] || RATES.regionalFixedCosts.councilRelaxation.costs["Brisbane"];
+    $("#relaxationNote").textContent = `(~${fmt$(cost)} fixed fee for setback approval)`;
+}
+
+function readInputs(){
+  const projectTypes = $$('input[name="projectType"]:checked').map(el => el.value);
+  const qualityIndex = parseInt($("#quality").value,10);
+  const region = $("#region").value;
+  
+  updateRelaxationNote(region);
+
+  // Scaffolding Auto-lock & Note Logic
+  const sc = $("#scaffolding"), lf = $("#liftExistingHouse");
+  
+  const isSecondStorey = projectTypes.includes("Second Storey Addition");
+  if (isSecondStorey){ 
+    sc.checked=true; sc.disabled=true; $("#scaffoldNote").textContent="Included in project type"; 
+  } else { 
+    sc.disabled=false; 
+    $("#scaffoldNote").textContent="Required for some roofs"; 
+  }
+  
+  const isRaiseUnder = projectTypes.includes("Raise & Build Under");
+  if (isRaiseUnder){ 
+    lf.checked=true; lf.disabled=true; $("#liftNote").textContent="Included in project type"; 
+  } else { 
+    lf.disabled=false; 
+    $("#liftNote").textContent="Fixed cost for raise/restump"; 
+  }
+
+  return {
+    estimateName: $("#estimateName").value.trim(),
+    clientName: $("#clientName").value.trim(),
+    projectAddress: $("#projectAddress").value.trim(), // NEW
+    livingArea: parseFloat($("#livingArea").value)||0,
+    kitchenArea: parseFloat($("#kitchenArea").value)||0,
+    bathroomArea: parseFloat($("#bathroomArea").value)||0,
+    wetArea: parseFloat($("#wetArea").value)||0,
+    carportArea: parseFloat($("#carportArea").value)||0,
+    retainingWallsArea: parseFloat($("#retainingWallsArea").value)||0,
+    qualityIndex, region, projectTypes,
+    drivers:{
+      scaffolding: sc.checked, 
+      complexSite: $("#complexSite").checked,
+      liftExistingHouse: lf.checked, 
+      designFees: $("#designFees").checked,
+      councilRelaxation: $("#councilRelaxation").checked 
+    }
+  };
+}
+
+function renderOutputs(calc, inputs){
+  const { totals, parts } = calc;
+
+  // Live preview
+  $("#pvMin").textContent = fmt$(totals.minBudget);
+  $("#pvMax").textContent = fmt$(totals.maxBudget);
+  $("#pvRate").innerHTML = inputs.livingArea+inputs.kitchenArea+inputs.bathroomArea+inputs.wetArea>0
+    ? `Base area: <b>${fmt$(parts.baseAreaOnly)}/m²</b> • Blended: <b>${fmt$(parts.blendedAllIn)}/m²</b>`
+    : "Enter internal areas to get an estimate.";
+  $("#pvUplift").textContent = `Type: +${fmtP(parts.maxUpliftRate)}`;
+  $("#pvRegion").textContent = `Region: +${fmtP(totals.regionAdj-1)}`;
+
+  // Estimate panel
+  $("#totalMin").textContent = fmt$(totals.minBudget);
+  $("#totalMax").textContent = fmt$(totals.maxBudget);
+  $("#totalPerMSQ").innerHTML = inputs.livingArea+inputs.kitchenArea+inputs.bathroomArea+inputs.wetArea>0
+    ? `Base area: <b>${fmt$(parts.baseAreaOnly)}/m²</b> • Blended: <b>${fmt$(parts.blendedAllIn)}/m²</b>`
+    : "Enter internal areas to get an estimate.";
+  $("#projectUplift").textContent = `Project adj: +${fmtP(parts.maxUpliftRate)}`;
+  $("#regionAdj").textContent = `Regional adj: +${fmtP(totals.regionAdj-1)}`;
+
+  // Summary
+  $("#summaryProjectType").textContent = inputs.projectTypes.length > 0 ? inputs.projectTypes.join(", ") : "General Renovation";
+  $("#summaryTotalArea").textContent = fmtN(totals.totalProjectArea);
+  $("#summaryQuality").textContent = QUALITY_LABELS[inputs.qualityIndex];
+
+  // Breakdown - Area Costs now include m²
+  $("#costLiving").textContent    = `${fmt$(parts.costLiving)} (${fmtN(inputs.livingArea)} m² @ ${fmt$(parts.rateLiving)}/m²)`;
+  $("#costKitchen").textContent   = `${fmt$(parts.costKitchen)} (${fmtN(inputs.kitchenArea)} m² @ ${fmt$(parts.rateKitchen)}/m²)`;
+  $("#costBathroom").textContent  = `${fmt$(parts.costBathroom)} (${fmtN(inputs.bathroomArea)} m² @ ${fmt$(parts.rateBathroom)}/m²)`;
+  $("#costWet").textContent       = `${fmt$(parts.costWet)} (${fmtN(inputs.wetArea)} m² @ ${fmt$(parts.rateWet)}/m²)`;
+  $("#costCarport").textContent   = `${fmt$(parts.costCarport)} (${fmtN(inputs.carportArea)} m² @ ${fmt$(parts.rateCarport)}/m²)`;
+  $("#costRetaining").textContent = `${fmt$(parts.costRetaining)} (${fmtN(inputs.retainingWallsArea)} m² @ ${fmt$(parts.rateRet)}/m²)`;
+
+  $("#costUplift").textContent    = `${fmt$(parts.areaCostsUplifted - parts.areaCostsInternal)} (+${fmtP(parts.maxUpliftRate)} on internal areas)`;
+  const regionalCost = totals.subtotal * (totals.regionAdj - 1);
+  $("#costRegional").textContent  = `${fmt$(regionalCost)} (+${fmtP(totals.regionAdj-1)} on total)`;
+  
+  // Specific Drivers List
+  const driversList = $("#specificDriversList");
+  driversList.innerHTML = '';
+  if (parts.activeDrivers.length > 0) {
+    driversList.innerHTML += `<div style="display:flex; justify-content:space-between"><span>Specific Cost Drivers (Total)</span><span id="costDrivers">${fmt$(parts.specificCostDrivers)}</span></div>`;
+    parts.activeDrivers.forEach(driver => {
+        driversList.innerHTML += `<div style="display:flex; justify-content:space-between; font-size:.9rem; color:var(--muted); margin-left:10px;"><span>— ${driver.label}</span><span>${fmt$(driver.cost)}</span></div>`;
+    });
+  } else {
+    driversList.innerHTML += `<div style="display:flex; justify-content:space-between"><span>Specific Cost Drivers</span><span id="costDrivers">0</span></div>`;
+  }
+  
+  $("#costFixed").textContent     = fmt$(parts.fixedProjectCosts);
+  $("#subtotalCost").textContent  = fmt$(totals.subtotal);
+}
+function recalc(){ const inputs=readInputs(); const calc=computeEstimate(inputs); renderOutputs(calc, inputs); return {inputs, calc}; }
+
+/* ======================
+   Tabs (mobile-first)
+   ====================== */
+$$(".tab").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    $$(".tab").forEach(b=>b.classList.remove("active")); btn.classList.add("active");
+    $("#tab-inputs").classList.toggle("hidden", btn.dataset.tab!=="inputs");
+    $("#tab-estimate").classList.toggle("hidden", btn.dataset.tab!=="estimate");
+    $("#tab-saved").classList.toggle("hidden", btn.dataset.tab!=="saved");
+    if (btn.dataset.tab==="estimate") recalc();
+    if (btn.dataset.tab==="saved") refreshSavedList();
+  });
+});
+
+/* ======================
+   Local saves (always-on)
+   ====================== */
+const LS_KEY="reno_arch_estimates_v1";
+const all = ()=> JSON.parse(localStorage.getItem(LS_KEY)||"[]");
+const put = (obj)=> localStorage.setItem(LS_KEY, JSON.stringify([...all(), obj]));
+const del = (id)=> localStorage.setItem(LS_KEY, JSON.stringify(all().filter(x=>x.id!==id)));
+
+function currentPayload(){
+  const {inputs, calc} = recalc();
+  return {
+    id: uuid(), version:1,
+    name: inputs.estimateName||"Untitled Estimate",
+    client: inputs.clientName||"Valued Client",
+    address: inputs.projectAddress||"No Address Provided", // NEW
+    projectType: inputs.projectTypes.join(", ") || "General Renovation", 
+    totalArea: calc.totals.totalProjectArea,
+    minBudget: calc.totals.minBudget,
+    maxBudget: calc.totals.maxBudget,
+    inputs, timestamp: new Date().toISOString()
+  };
+}
+function doSave(){ const p=currentPayload(); put(p); toast("Saved locally"); if (!$("#tab-saved").classList.contains("hidden")) refreshSavedList(); }
+function refreshSavedList(){
+  const list=$("#savedList"); list.innerHTML="";
+  const items = all().sort((a,b)=> (a.name||"").localeCompare(b.name||""));
+  if (!items.length){ list.innerHTML = `<div class="box" style="background:var(--bg-2)">No saved estimates yet. Create one and tap <b>Save</b>.</div>`; return; }
+  for (const item of items){
+    const row = document.createElement("div"); row.className="saved-item";
+    row.innerHTML = `
+      <div>
+        <div style="font-weight:900">${item.name||"Untitled Estimate"}</div>
+        <div class="micro muted">${item.client||"No Client"}</div>
+        <div class="micro" style="color:var(--glow-1); margin-top:3px">${fmt$(item.minBudget)} to ${fmt$(item.maxBudget)}</div>
+        <div class="micro muted">${item.projectType} • ${fmtN(item.totalArea)} m²</div>
+      </div>
+      <div class="saved-actions">
+        <button class="btn btn-dark" data-load="${item.id}">Load</button>
+        <button class="btn" data-del="${item.id}" style="background:var(--danger);border-color:var(--danger);color:#fff">Delete</button>
+      </div>`;
+    list.appendChild(row);
+  }
+}
+
+/* ======================
+   Canvas report & PDF (no external libs)
+   ====================== */
+function drawReportCanvas(inputs, calc){
+  const W=1240, H=1754, M=60;
+  const cnv=document.createElement("canvas"); cnv.width=W; cnv.height=H;
+  const g=cnv.getContext("2d");
+  
+  // --- Setup & Header ---
+  g.fillStyle="#FFFFFF"; g.fillRect(0,0,W,H);
+  const grad=g.createLinearGradient(0,0,W,0); grad.addColorStop(0,"#FF7518"); grad.addColorStop(1,"#FF9A33");
+  g.fillStyle=grad; g.fillRect(0,0,W,110);
+  g.fillStyle="#ffffff"; g.font="700 28px system-ui,Segoe UI,Inter,Arial"; g.fillText("Renovation Project Budget Estimate", M, 48);
+  g.font="400 16px system-ui,Segoe UI,Inter,Arial"; const dateStr=new Date().toLocaleDateString();
+  
+  // UPDATED: Include Address
+  const clientLine = `Client: ${inputs.clientName||"Valued Client"} • Address: ${inputs.projectAddress||"N/A"} • Date: ${dateStr}`;
+  g.fillText(clientLine, M, 78);
+
+  // title
+  g.fillStyle="#21243B"; g.font="800 26px system-ui,Segoe UI,Inter,Arial"; g.fillText((inputs.estimateName||"Untitled Estimate"), M, 150);
+
+  // --- Range Card ---
+  const cardX=M, cardY=175, cardW=W-2*M, cardH=160;
+  rounded(g, cardX,cardY,cardW,cardH,16,"#F8F8F8","#E0E0E0", false);
+  g.fillStyle="#21243B"; g.font="600 16px system-ui,Segoe UI,Inter"; g.fillText("Total Project Budget Range", cardX+18, cardY+32);
+  g.fillStyle="#FF7518"; g.shadowColor="rgba(255,117,24,.2)"; g.shadowBlur=8; g.font="900 36px system-ui,Segoe UI,Inter";
+  g.fillText(fmt$(calc.totals.minBudget), cardX+18, cardY+78);
+  g.fillText(`to ${fmt$(calc.totals.maxBudget)}`, cardX+18, cardY+122);
+  g.shadowBlur=0;
+  g.fillStyle="#808080"; g.font="400 14px system-ui,Segoe UI,Inter";
+  const internalArea = inputs.livingArea+inputs.kitchenArea+inputs.bathroomArea+inputs.wetArea;
+  const baseLine = internalArea>0
+    ? `Base Rate: ${fmt$(calc.parts.baseAreaOnly)}/m²  •  Blended Rate: ${fmt$(calc.parts.blendedAllIn)}/m²`
+    : "Enter internal areas to get an estimate.";
+  g.fillText(baseLine, cardX+18, cardY+146);
+  pill(g, `Project adj: +${fmtP(calc.parts.maxUpliftRate)}`, cardX+cardW-260, cardY+36);
+  pill(g, `Regional adj: +${fmtP(calc.totals.regionAdj-1)}`, cardX+cardW-260, cardY+68);
+
+  // --- Summary (FIXED OVERLAP - Adjusted X positions) ---
+  const sumY = cardY+cardH+24, sumH=100;
+  rounded(g, M,sumY,W-2*M,sumH,10,"#F8F8F8","#E0E0E0");
+  g.fillStyle="#21243B"; g.font="700 16px system-ui,Segoe UI,Inter"; g.fillText("Project Summary:", M+16, sumY+28);
+  g.font="600 14px system-ui,Segoe UI,Inter"; g.fillStyle="#21243B";
+  
+  // Project Types (Truncated to avoid overlap)
+  const typesText = inputs.projectTypes.join(", ") || "General Renovation";
+  g.fillText(`Type(s): ${typesText}`, M+16, sumY+56);
+  
+  // Adjusted X position for Total Area (from 350 to 575)
+  g.fillText(`Total Internal Area: ${fmtN(calc.totals.totalProjectArea)} m²`, M+16 + 575, sumY+56);
+  // Adjusted X position for Quality (from 650 to 800)
+  g.fillText(`Quality: ${QUALITY_LABELS[inputs.qualityIndex]}`, M+16 + 800, sumY+56);
+
+// ... rest of the function ...
+
+  // --- Breakdown ---
+  const bdY = sumY + sumH + 30;
+  g.fillStyle="#21243B"; g.font="700 18px system-ui,Segoe UI,Inter"; g.fillText("Estimate Breakdown", M, bdY);
+  g.strokeStyle="#E0E0E0"; g.beginPath(); g.moveTo(M, bdY+9); g.lineTo(W-M, bdY+9); g.stroke();
+
+  const col1X=M, col2X=W/2+5, rowH=28, startY=bdY+60;
+  g.font="700 16px system-ui,Segoe UI,Inter"; g.fillStyle="#21243B";
+  g.fillText("Area Costs:", col1X, startY-30);
+  g.fillStyle="#808080"; g.font="600 14px system-ui,Segoe UI,Inter";
+  
+  // Area Costs with m² (UPDATED)
+  row(g, "Living / Office", `${fmt$(calc.parts.costLiving)} (${fmtN(inputs.livingArea)} m² @ ${fmt$(calc.parts.rateLiving)}/m²)`, col1X, startY, rowH);
+  row(g, "New Kitchen", `${fmt$(calc.parts.costKitchen)} (${fmtN(inputs.kitchenArea)} m² @ ${fmt$(calc.parts.rateKitchen)}/m²)`, col1X, startY+rowH, rowH);
+  row(g, "Bathroom Upgrade", `${fmt$(calc.parts.costBathroom)} (${fmtN(inputs.bathroomArea)} m² @ ${fmt$(calc.parts.rateBathroom)}/m²)`, col1X, startY+2*rowH, rowH);
+  row(g, "Wet Areas (Other)", `${fmt$(calc.parts.costWet)} (${fmtN(inputs.wetArea)} m² @ ${fmt$(calc.parts.rateWet)}/m²)`, col1X, startY+3*rowH, rowH);
+  row(g, "Double Carport", `${fmt$(calc.parts.costCarport)} (${fmtN(inputs.carportArea)} m² @ ${fmt$(calc.parts.rateCarport)}/m²)`, col1X, startY+4*rowH, rowH);
+  row(g, "Retaining Walls", `${fmt$(calc.parts.costRetaining)} (${fmtN(inputs.retainingWallsArea)} m² @ ${fmt$(calc.parts.rateRet)}/m²)`, col1X, startY+5*rowH, rowH);
+  
+  // Uplifts and Drivers
+  g.fillStyle="#21243B"; g.font="700 16px system-ui,Segoe UI,Inter"; g.fillText("Adjustments & Fixed Costs:", col2X, startY-30);
+  g.fillStyle="#21243B"; g.font="400 14px system-ui,Segoe UI,Inter";
+  
+  let currentY = startY;
+  
+  row(g, "Project Type Uplift", fmt$(calc.parts.areaCostsUplifted - calc.parts.areaCostsInternal), col2X, currentY, rowH); currentY += rowH;
+  const regionalCost = calc.totals.subtotal * (calc.totals.regionAdj - 1);
+  row(g, "Regional Adjustment", fmt$(regionalCost), col2X, currentY, rowH); currentY += rowH;
+  
+  // Specific Cost Drivers (DETAILED)
+  g.font="400 14px system-ui,Segoe UI,Inter";
+  if (calc.parts.activeDrivers.length > 0) {
+      g.font="700 14px system-ui,Segoe UI,Inter";
+      row(g, "Specific Cost Drivers (Total)", fmt$(calc.parts.specificCostDrivers), col2X, currentY, rowH); currentY += rowH;
+      g.font="400 12px system-ui,Segoe UI,Inter"; g.fillStyle="#808080";
+      calc.parts.activeDrivers.forEach(driver => {
+          row(g, `— ${driver.label}`, fmt$(driver.cost), col2X, currentY+2, rowH); currentY += rowH;
+      });
+      g.fillStyle="#808080"; // Reset color
+      currentY -= 0; // Minor vertical adjustment after list
+  } else {
+      row(g, "Specific Cost Drivers", fmt$(0), col2X, currentY, rowH); currentY += rowH;
+  }
+  
+  row(g, `— ${RATES.liftFixedCost.label} (Fixed Cost)`, fmt$(calc.parts.fixedProjectCosts), col2X, currentY, rowH); currentY += rowH;
+
+  g.font="700 14px system-ui,Segoe UI,Inter";
+  // Added 10px spacing before the final total line
+  row(g, "Subtotal Cost (pre-range)", fmt$(calc.totals.subtotal), col2X, currentY+10, rowH);
+
+  // --- Footer ---
+  g.fillStyle="#808080"; g.font="400 12px system-ui,Segoe UI,Inter";
+  g.fillText("Preliminary budget estimate only. Exclusions may apply (permits, services relocations, hazardous materials).", M, H-M+6);
+
+  return cnv;
+
+  function rounded(ctx,x,y,w,h,r,fill,stroke,dashed=false){
+    ctx.beginPath();
+    ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+    ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+    ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+    ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y); ctx.closePath();
+    ctx.fillStyle = fill; ctx.fill(); ctx.strokeStyle = stroke; ctx.lineWidth=2;
+    if (dashed){ ctx.setLineDash([6,6]); } ctx.stroke(); ctx.setLineDash([]);
+  }
+  function pill(ctx, text, x, y){
+    ctx.fillStyle="#F8F8F8"; ctx.strokeStyle="#E0E0E0"; ctx.lineWidth=1;
+    const padX=10, padY=6; ctx.font="500 12px system-ui,Segoe UI,Inter";
+    const w = ctx.measureText(text).width + padX*2, h=22;
+    rounded(ctx, x, y-14, w, h, 8, "#F8F8F8", "#E0E0E0");
+    ctx.fillStyle="#21243B"; ctx.fillText(text, x+padX, y+2);
+  }
+  function row(ctx, label, value, x, y, h){
+    // Label drawing position
+    ctx.fillText(label, x, y);
+    // Value drawing position (right-aligned in its column)
+    ctx.textAlign="right"; 
+    ctx.fillText(value, x+ (W/2 - 70), y);
+    ctx.textAlign="left"; // Reset for next label
+  }
+}
+
+/* Pure-JS PDF: place JPEG on A4 page */
+function jpegDataUrlToPdfBlob(jpegDataUrl, pageWmm=210, pageHmm=297, marginMm=10){
+  const mm2pt = mm => mm * 72 / 25.4;
+  const pageW = mm2pt(pageWmm), pageH = mm2pt(pageHmm), margin = mm2pt(marginMm);
+
+  const base64 = jpegDataUrl.split(",")[1];
+  const bin = atob(base64);
+  const imgBytes = new Uint8Array(bin.length);
+  for (let i=0;i<bin.length;i++) imgBytes[i] = bin.charCodeAt(i);
+
+  function readJpegSize(bytes){
+    let p=2;
+    while (p+9 < bytes.length){
+      if (bytes[p] !== 0xFF) break;
+      const m = bytes[p+1]; const len = (bytes[p+2]<<8) + bytes[p+3];
+      if (m===0xC0 || m===0xC2){
+        const h=(bytes[p+5]<<8)+bytes[p+6], w=(bytes[p+7]<<8)+bytes[p+8];
+        return {w,h};
+      }
+      p += 2 + len;
+    }
+    return {w:1240,h:1754};
+  }
+  const {w:imgWpx, h:imgHpx} = readJpegSize(imgBytes);
+
+  const areaW = pageW - 2*margin, areaH = pageH - 2*margin;
+  const imgRatio = imgWpx/imgHpx, areaRatio = areaW/areaH;
+  let drawW = areaW, drawH = areaH;
+  if (imgRatio > areaRatio){ drawH = drawW / imgRatio; } else { drawW = drawH * imgRatio; }
+  const posX = margin, posY = pageH - margin - drawH;
+
+  const enc = s => new TextEncoder().encode(s.replace(/\n/g,"\r\n"));
+  const parts = []; let offset = 0; const xref = [];
+  const add = u8 => { parts.push(u8); offset += u8.length; };
+  const addS = s => add(enc(s));
+  const obj = (id, body) => { xref[id]=offset; addS(`${id} 0 obj\n${body}\nendobj\n`); };
+
+  addS("%PDF-1.4\n%âãÏÓ\n");
+  obj(1, `<< /Type /Catalog /Pages 2 0 R >>`);
+  obj(2, `<< /Type /Pages /Kids [3 0 R] /Count 1 >>`);
+  obj(3, `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageW} ${pageH}]
+/Resources << /ProcSet [/PDF /ImageC] /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>`);
+
+  // image stream
+  xref[4]=offset;
+  addS(`4 0 obj\n<< /Type /XObject /Subtype /Image /Width ${imgWpx} /Height ${imgHpx} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${imgBytes.length} >>\nstream\n`);
+  add(imgBytes);
+  addS(`\nendstream\nendobj\n`);
+
+  // content stream (place the image)
+  const stream = `q
+${drawW} 0 0 ${drawH} ${posX} ${posY} cm
+/Im0 Do
+Q`;
+  const streamBytes = enc(stream);
+  obj(5, `<< /Length ${streamBytes.length} >>\nstream\n${stream}\nendstream`);
+
+  const xrefStart = offset;
+  addS(`xref\n0 6\n0000000000 65535 f \n`);
+  for (let i=1;i<=5;i++){
+    const off = String(xref[i]).padStart(10,'0');
+    addS(`${off} 00000 n \n`);
+  }
+  addS(`trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xrefStart}\n%%EOF`);
+  return new Blob(parts, {type:"application/pdf"});
+}
+
+/* ======================
+   Export handlers
+   ====================== */
+async function exportPNG(){
+  const {inputs, calc} = recalc();
+  const canvas = drawReportCanvas(inputs, calc);
+  const name = ( (inputs.estimateName||"Renovation Estimate").replace(/\s+/g,'_') + "_Budget.png" );
+  if (canvas.toBlob){
+    canvas.toBlob(blob=>{
+      if (!blob){ toast("PNG export failed","err"); return; }
+      try { downloadBlob(blob, name); toast(`Saved: ${name}`); }
+      catch { const url = URL.createObjectURL(blob); openDataUrl(url); toast("Opened PNG in a new tab"); }
+    },"image/png",1);
+  } else {
+    const url = canvas.toDataURL("image/png"); openDataUrl(url);
+  }
+}
+async function exportPDF(){
+  const {inputs, calc} = recalc();
+  const canvas = drawReportCanvas(inputs, calc);
+  const name = ( (inputs.estimateName||"Renovation Estimate").replace(/\s+/g,'_') + "_Budget.pdf" );
+  const jpegUrl = canvas.toDataURL("image/jpeg", 0.92);
+  try {
+    const blob = jpegDataUrlToPdfBlob(jpegUrl, 210, 297, 10);
+    downloadBlob(blob, name);
+    toast(`Saved: ${name}`);
+  } catch (e){
+    console.error(e);
+    openDataUrl(jpegUrl);
+    toast("PDF export blocked; opened image instead","err");
+  }
+}
+
+/* ======================
+   Wire UI & Init
+   ====================== */
+function wire(){
+  renderProjectTypes();
+  $("#quality").addEventListener("input", ()=>{ $("#qualityLabel").textContent=QUALITY_LABELS[parseInt($("#quality").value,10)]; recalc(); });
+  ["livingArea","kitchenArea","bathroomArea","wetArea","carportArea","retainingWallsArea"].forEach(id=> $("#"+id).addEventListener("input", recalc));
+  ["region","scaffolding","complexSite","liftExistingHouse","designFees", "councilRelaxation"].forEach(id=> $("#"+id).addEventListener("change", recalc));
+  // Added change listeners for new text fields to update live preview on blur/change
+  ["estimateName", "clientName", "projectAddress"].forEach(id=> $("#"+id).addEventListener("change", recalc));
+
+  $("#btnSave").addEventListener("click", doSave);
+  $("#btnPNG").addEventListener("click", exportPNG);
+  $("#btnPDF").addEventListener("click", exportPDF);
+
+  $("#btnExportJSON").addEventListener("click", ()=>{
+    const blob = new Blob([JSON.stringify(all(),null,2)], {type:"application/json"});
+    downloadBlob(blob, "renovation_estimates.json");
+  });
+  $("#importJSON").addEventListener("change", (e)=>{
+    const file = e.target.files?.[0]; if (!file) return;
+    const r = new FileReader();
+    r.onload = ()=>{ try{ const arr=JSON.parse(r.result); if(Array.isArray(arr)) localStorage.setItem(LS_KEY, JSON.stringify(arr)); toast("Imported JSON"); refreshSavedList(); }catch{ toast("Invalid JSON","err"); } };
+    r.readAsText(file);
+  });
+
+  $("#savedList").addEventListener("click", (e)=>{
+    const load = e.target.closest("[data-load]"); const delBtn = e.target.closest("[data-del]");
+    if (load){
+      const id=load.dataset.load; const item=all().find(x=>x.id===id); if(!item) return;
+      $("#estimateName").value = item.name||"";
+      $("#clientName").value = item.client||"";
+      $("#projectAddress").value = item.address||""; // NEW
+      $("#region").value = item.inputs?.region || "Brisbane";
+      $("#quality").value = item.inputs?.qualityIndex ?? 1; $("#qualityLabel").textContent = QUALITY_LABELS[parseInt($("#quality").value,10)];
+      $("#livingArea").value = item.inputs?.livingArea ?? 0;
+      $("#kitchenArea").value = item.inputs?.kitchenArea ?? 0;
+      $("#bathroomArea").value = item.inputs?.bathroomArea ?? 0;
+      $("#wetArea").value = item.inputs?.wetArea ?? 0;
+      $("#carportArea").value = item.inputs?.carportArea ?? 0;
+      $("#retainingWallsArea").value = item.inputs?.retainingWallsArea ?? 0;
+      
+      // Handle multiple project types (checkboxes)
+      $$('input[name="projectType"]').forEach(r => r.checked = false);
+      const types = item.inputs?.projectTypes || [];
+      types.forEach(type => {
+        const checkbox = $$('input[name="projectType"]').find(c => c.value === type);
+        if (checkbox) checkbox.checked = true;
+      });
+
+      $("#scaffolding").checked = !!item.inputs?.drivers?.scaffolding;
+      $("#complexSite").checked = !!item.inputs?.drivers?.complexSite;
+      $("#liftExistingHouse").checked = !!item.inputs?.drivers?.liftExistingHouse;
+      $("#designFees").checked = !!item.inputs?.drivers?.designFees;
+      $("#councilRelaxation").checked = !!item.inputs?.drivers?.councilRelaxation;
+      recalc();
+      // Jump to estimate for clarity
+      $$(".tab").forEach(b=>b.classList.remove("active")); $('[data-tab="estimate"]').classList.add("active");
+      $("#tab-inputs").classList.add("hidden"); $("#tab-estimate").classList.remove("hidden"); $("#tab-saved").classList.add("hidden");
+      toast("Loaded into editor");
+    }
+    if (delBtn){ del(delBtn.dataset.del); refreshSavedList(); }
+  });
+
+  // Self-check
+  $("#btnSelfCheck").addEventListener("click", ()=>{
+    const inputs_check = {livingArea:10,kitchenArea:10,bathroomArea:5,wetArea:5,carportArea:36,retainingWallsArea:10,qualityIndex:1,region:"Brisbane",projectTypes:["Second Storey Addition", "Double Carport"],drivers:{scaffolding:true,liftExistingHouse:false,complexSite:false,designFees:false, councilRelaxation:true}, estimateName:"Test Check", clientName:"Test Client", projectAddress:"123 Test St"};
+    const calc_check = computeEstimate(inputs_check);
+    const results = [];
+    try {
+      const testCanvas = drawReportCanvas(inputs_check, calc_check);
+      results.push(["Canvas render", !!testCanvas && testCanvas.width>0]);
+      const jpg = testCanvas.toDataURL("image/jpeg",0.8);
+      const pdf = jpegDataUrlToPdfBlob(jpg);
+      results.push(["PDF build", pdf.size>1000]);
+      results.push(["Local storage", (localStorage.setItem("__x","1"), localStorage.removeItem("__x"), true)]);
+    } catch(e){ results.push(["Runtime errors", false]); console.error(e); }
+    const ok = results.every(r=>r[1]);
+    toast(ok ? "Self‑check passed" : "Self‑check found issues", ok?"ok":"err", 3200);
+    alert("Self‑check:\n\n"+results.map(r=>`${r[1]?'✅':'❌'} ${r[0]}`).join("\n"));
+  });
+}
+
+renderProjectTypes();
+$("#qualityLabel").textContent = QUALITY_LABELS[1];
+recalc();
+wire();
+</script>
+
+</body>
+</html>
