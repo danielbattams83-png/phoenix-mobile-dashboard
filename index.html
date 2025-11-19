@@ -16,7 +16,7 @@
         .loading-spinner {
             /* Changed spinner color to orange */
             border: 4px solid #e5e7eb;
-            border-top: 4px solid #ff7518; /* Tailwind orange-600 */
+            border-top: 4px solid #f97316; /* Tailwind orange-500 */
             border-radius: 50%;
             width: 30px;
             height: 30px;
@@ -59,17 +59,17 @@
             </div>
         </header>
 
-        <nav class="mb-8 p-4 bg-orange-600 shadow-xl rounded-xl flex flex-wrap gap-4 justify-center">
-            <a href="https://gemini.google.com/share/a74eb5643797" target="_blank" class="px-4 py-2 bg-white text-orange-600 font-semibold rounded-lg shadow-md hover:bg-gray-100 transition duration-150">
+        <nav class="mb-8 p-4 bg-orange-500 shadow-xl rounded-xl flex flex-wrap gap-4 justify-center">
+            <a href="https://gemini.google.com/share/a74eb5643797" target="_blank" class="px-4 py-2 bg-white text-orange-500 font-semibold rounded-lg shadow-md hover:bg-gray-100 transition duration-150">
                 Site Measure
             </a>
-            <a href="https://gemini.google.com/share/f494c9321181" target="_blank" class="px-4 py-2 bg-white text-orange-600 font-semibold rounded-lg shadow-md hover:bg-gray-100 transition duration-150">
+            <a href="https://gemini.google.com/share/f494c9321181" target="_blank" class="px-4 py-2 bg-white text-orange-500 font-semibold rounded-lg shadow-md hover:bg-gray-100 transition duration-150">
                 Existing External Walls
             </a>
-            <a href="Phoenix Ballpark Estimator.html" target="_blank" class="px-4 py-2 bg-white text-orange-600 font-semibold rounded-lg shadow-md hover:bg-gray-100 transition duration-150">
+            <a href="Phoenix Ballpark Estimator.html" target="_blank" class="px-4 py-2 bg-white text-orange-500 font-semibold rounded-lg shadow-md hover:bg-gray-100 transition duration-150">
                 Ballpark Estimate
             </a>
-            <a href="design_assist.html" target="_blank" class="px-4 py-2 bg-white text-orange-600 font-semibold rounded-lg shadow-md hover:bg-gray-100 transition duration-150">
+            <a href="design_assist.html" target="_blank" class="px-4 py-2 bg-white text-orange-500 font-semibold rounded-lg shadow-md hover:bg-gray-100 transition duration-150">
                 Email Summary
             </a>
         </nav>
@@ -78,12 +78,12 @@
         <div id="auth-status" class="bg-orange-100 border-l-4 border-orange-500 text-orange-800 p-4 rounded-lg mb-6 hidden">
             <p class="font-bold">Authorization Required</p>
             <p class="text-sm">Please click the button to authorize access to your Google Calendar and Tasks.</p>
-            <button id="authorize-button" class="mt-3 px-4 py-2 bg-orange-600 text-white font-semibold rounded-lg shadow-md hover:bg-orange-700 transition duration-150">Authorize Access</button>
+            <button id="authorize-button" class="mt-3 px-4 py-2 bg-orange-500 text-white font-semibold rounded-lg shadow-md hover:bg-orange-700 transition duration-150">Authorize Access</button>
         </div>
 
         <div id="summary-card" class="bg-white p-4 rounded-xl shadow-lg mb-6 hidden">
             <h2 class="text-xl font-bold text-gray-700 mb-2">Bookings Summary</h2>
-            <p class="text-gray-600 text-lg">You have <span id="booking-count" class="text-3xl font-extrabold text-orange-600 mr-1">0</span> upcoming client bookings in the next 14 days.</p>
+            <p class="text-gray-600 text-lg">You have <span id="booking-count" class="text-3xl font-extrabold text-orange-500 mr-1">0</span> upcoming client bookings in the next 14 days.</p>
         </div>
         
         <div id="main-content-grid" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -107,7 +107,7 @@
             <div id="tasks-column" class="lg:col-span-1">
                 <div id="tasks-container" class="p-6 bg-white rounded-xl shadow-lg min-h-[300px]">
                     <h2 class="text-xl font-bold text-gray-700 mb-4 flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-orange-600" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16 4h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M22 6H16"/><path d="M12 4h.01"/><path d="M6 10h.01"/><path d="M6 14h.01"/><path d="M6 18h.01"/><path d="M16 10h4"/><path d="M16 14h4"/><path d="M16 18h4"/><path d="M3 6h1"/><path d="M3 10h1"/><path d="M3 14h1"/><path d="M3 18h1"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-orange-500" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16 4h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M22 6H16"/><path d="M12 4h.01"/><path d="M6 10h.01"/><path d="M6 14h.01"/><path d="M6 18h.01"/><path d="M16 10h4"/><path d="M16 14h4"/><path d="M16 18h4"/><path d="M3 6h1"/><path d="M3 10h1"/><path d="M3 14h1"/><path d="M3 18h1"/></svg>
                         <span id="task-list-title-display">All Pending Tasks</span>
                     </h2>
                     <div id="tasks-list" class="space-y-3">
